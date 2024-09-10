@@ -451,7 +451,8 @@ void parse_cpptraj_results(JobSettings settings, SlurmSettings slurm)
             }
         }
     }
-    clustering << " heiragglo epsilon 0.5 clusters 10 linkage epsilonplot epsilonplot.dat";
+    clustering.seekp(-1,clustering.cur);
+    clustering << " heiragglo epsilon 1.0 clusters 10 linkage epsilonplot epsilonplot.dat";
     clustering << " bestrep centroid";
     clustering << " out cnumvtime.dat";
     clustering << " summary cluster_summary.dat";
