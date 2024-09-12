@@ -834,10 +834,10 @@ namespace ambermachine
 
 
         // run analyses.
-        if (run_cpptraj(settings,slurm))
-        {
-            parse_cpptraj_results(settings,slurm);
-        }
+        // if (run_cpptraj(settings,slurm))
+        // {
+        //     parse_cpptraj_results(settings,slurm);
+        // }
 
         // plot generated data -- find datasets of matching lengths to compare with scatter plots, clustering, etc.
 
