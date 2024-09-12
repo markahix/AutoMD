@@ -51,14 +51,9 @@ class JobSettings
         std::string COUNTERIONS_MASK;
         std::string CPPTRAJ_EXTRA_COMMANDS;
 
-        //Slurm Settings
-        std::string SLURM_partition="";
-        std::string SLURM_queue="";
-        std::string SLURM_gpu="";
-        std::string SLURM_amber_module="";
-
         // Constructor/Destructor
         JobSettings();
+        ~JobSettings();
 };
 
 #endif

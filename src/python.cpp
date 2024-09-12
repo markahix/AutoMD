@@ -281,3 +281,183 @@ if G("SASA.dat"):
     return;
 }
 
+std::string python::preamble()
+{ 
+    return R""""(#!/usr/bin/env python3
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+from scipy.ndimage import gaussian_filter
+import numpy as np
+import pandas as pd
+)"""";
+}
+
+std::string python::plot_rmsd()
+{ 
+    return R""""(
+data = np.genfromtxt('06_Analysis/RMSD.dat',skip_header=1,usecols=1)
+x = np.arange(0,len(data),dtype=float)/1000
+smoothed = gaussian_filter(data,sigma=100)
+fig = plt.figure(figsize=(6,4),dpi=300)
+ax = fig.add_subplot(1,1,1)
+ax.set_xlabel("Time (ns)")
+ax.set_ylabel(r"RMSD ($\AA$)")
+ax.set_xlim(0,x.max())
+ax.plot(x,data,color="grey",alpha=0.5)
+ax.plot(x,smoothed,color="blue",alpha=1.0)
+fig.savefig('00_Report/RMSD.png',dpi=300,facecolor='white')
+)"""";
+}
+
+std::string python::plot_rmsf()
+{ 
+    return R""""(
+data = np.genfromtxt('06_Analysis/RMSF_ByRes.dat',skip_header=1,usecols=1)
+fig = plt.figure(figsize=(6,4),dpi=300)
+ax = fig.add_subplot(1,1,1)
+ax.set_xlim(0,len(data)+1)
+ax.bar(np.arange(1,len(data)+1,1),data,align="center")
+fig.savefig('00_Report/RMSF.png',dpi=300,facecolor='white')
+)"""";
+}
+
+std::string python::plot_correl()
+{ 
+    return R""""(
+data = np.genfromtxt('06_Analysis/Correlation.dat')
+fig = plt.figure(figsize=(7,6),dpi=300)
+dims = data.shape[0]
+X, Y = np.mgrid[0:dims:complex(0, dims), 0:dims:complex(0, dims)]
+ax = fig.add_subplot(1,1,1)
+im = ax.pcolormesh(X,Y,data,cmap="RdBu",vmin=-1.,vmax=1.)
+fig.colorbar(im,ticks=[-1,0,1],ax=ax)
+ax.xaxis.tick_bottom()
+plt.xticks(rotation=90)
+fig.savefig('00_Report/Correlated_Motion.png',dpi=300,facecolor='white')
+)"""";
+}
+
+std::string python::plot_lie()
+{ 
+    return R""""(
+data = np.genfromtxt('06_Analysis/LigInterEnergy.dat',usecols=(1,2),skip_header=1)
+
+coulomb = data[:,0]
+vdw = data[:,1]
+
+fig = plt.figure(figsize=(6,8),dpi=300)
+
+ax = fig.add_subplot(2,1,1)
+x = np.arange(0,len(coulomb),dtype=float)/1000
+smoothed = gaussian_filter(coulomb,sigma=100)
+ax.set_xlabel("Time (ns)")
+ax.set_ylabel(r"Coulomb Energy ($kcal\cdot mol^{-1}$)")
+ax.set_xlim(0,x.max())
+ax.plot(x,coulomb,color="grey",alpha=0.5)
+ax.plot(x,smoothed,color="blue",alpha=1.0)
+
+ax = fig.add_subplot(2,1,2)
+x = np.arange(0,len(vdw),dtype=float)/1000
+smoothed = gaussian_filter(vdw,sigma=100)
+ax.set_xlabel("Time (ns)")
+ax.set_ylabel(r"van der Waals Energy ($kcal\cdot mol^{-1}$)")
+ax.set_xlim(0,x.max())
+ax.plot(x,coulomb,color="grey",alpha=0.5)
+ax.plot(x,smoothed,color="blue",alpha=1.0)
+fig.savefig('00_Report/Ligand_Interaction_Energy.png',dpi=300,facecolor='white')
+)"""";
+}
+
+std::string python::plot_normal_modes()
+{ 
+    return R""""(
+data = np.genfromtxt('06_Analysis/normal_modes.csv',delimiter=',')
+num_of_modes = 6
+
+fig = plt.figure(figsize=[6,4],dpi=300)
+ax = fig.add_subplot(1,1,1)
+cmap = cm.get_cmap("viridis")
+color_range = np.linspace(0,1,num_of_modes)
+
+for i in range(num_of_modes):
+    ax.bar(np.arange(1, len(data[i])+1), data[i], width=1, align="center", color=cmap(color_range[i]), label = f"Mode {i+1}")
+ax.set_title(f"First {num_of_modes} Vibrational Modes")
+ax.legend()
+ax.set_xlim(0,len(data[0]]))
+plt.xticks(rotation = 90)
+fig.tight_layout()
+fig.savefig('00_Report/Largest_Normal_Modes.png',dpi=300,facecolor='white')
+)"""";
+}
+
+std::string python::plot_pca()
+{ 
+    return R""""(
+data = np.genfromtxt('06_Analysis/nma_first_100_modes.nmd',delimiter = None,skip_header = 9)
+area = np.pi * (2)**2
+x = data[0,2] * data[0,3:]
+y = data[1,2] * data[1,3:]
+z = -(-x**2 - y**2)
+
+fig = plt.figure(figsize=(6,6))
+ax = fig.add_subplot(1,1,1)
+
+ax.set_xlabel("Mode 1",fontsize=16)
+ax.set_ylabel("Mode 2",fontsize=16)
+ax.scatter(x,y,marker='o', s=area, zorder=10, alpha=0.4, c=z, edgecolors = 'black', cmap='viridis')
+plt.xticks(fontsize=14,rotation=90)
+plt.yticks(fontsize=14)
+plt.tight_layout()
+fig.savefig('00_Report/PrincipleComponentAnalysis.png',dpi=300,facecolor='white')
+)"""";
+}
+
+std::string python::plot_sasa()
+{ 
+    return R""""(
+df = pd.read_csv('SASA.dat',delim_whitespace=True)" << std::endl;
+df["Time (ns)"] = np.arange(0,len(df["#Frame"]),dtype=float)/1000
+df = df[df["Receptor"] != -1]
+df = df[df["Ligand"] != -1]
+df = df[df["Complex"] != -1]
+df["Interface"] = df["Receptor"] + df["Ligand"] - df["Complex"]
+
+fig = plt.figure(figsize=(6,8),dpi=300)
+ax = fig.add_subplot(4,1,1)
+data = df["Receptor"]
+smoothed = gaussian_filter(data,sigma=100)
+ax.plot(df["Time (ns)"],data,color="grey",alpha=0.5)
+ax.plot(df["Time (ns)"],smoothed,color="blue",alpha=1.0)
+ax.set_ylabel(r"Receptor SASA ($\AA^2$)")
+ax.set_xticks([])
+
+ax = fig.add_subplot(4,1,2)
+data = df["Ligand"]
+smoothed = gaussian_filter(data,sigma=100)
+ax.plot(df["Time (ns)"],data,color="grey",alpha=0.5)
+ax.plot(df["Time (ns)"],smoothed,color="blue",alpha=1.0)
+ax.set_ylabel(r"Ligand SASA ($\AA^2$)")
+ax.set_xticks([])
+
+ax = fig.add_subplot(4,1,3)
+data = df["Complex"]
+smoothed = gaussian_filter(data,sigma=100)
+ax.plot(df["Time (ns)"],data,color="grey",alpha=0.5)
+ax.plot(df["Time (ns)"],smoothed,color="blue",alpha=1.0)
+ax.set_ylabel(r"Complex SASA ($\AA^2$)")
+ax.set_xticks([])
+
+ax = fig.add_subplot(4,1,4)
+data = df["Interface"]
+smoothed = gaussian_filter(data,sigma=100)
+ax.plot(df["Time (ns)"],data,color="grey",alpha=0.5)
+ax.plot(df["Time (ns)"],smoothed,color="blue",alpha=1.0)
+ax.set_ylabel(r"Buried Interface ($\AA^2$)")
+ax.set_xlabel("Time (ns)")
+ax.set_xlim(0,max(df["Time (ns)"]))
+fig.subplots_adjust(hspace=0.0)
+fig.savefig('00_Report/SASA.png',dpi=300,facecolor='white')
+)"""";
+}
