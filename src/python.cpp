@@ -417,7 +417,7 @@ fig.savefig('00_Report/PrincipleComponentAnalysis.png',dpi=300,facecolor='white'
 std::string python::plot_sasa()
 { 
     return R""""(
-df = pd.read_csv('SASA.dat',delim_whitespace=True)" << std::endl;
+df = pd.read_csv('SASA.dat',delim_whitespace=True)
 df["Time (ns)"] = np.arange(0,len(df["#Frame"]),dtype=float)/1000
 df = df[df["Receptor"] != -1]
 df = df[df["Ligand"] != -1]
