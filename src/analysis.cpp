@@ -21,7 +21,6 @@ void parse_hbonds_avg(JobSettings settings)
     std::stringstream buffer;
     std::ifstream hbonds("06_Analysis/HBond_Table.dat");
     std::string line;
-    std::stringstream dummy;
     getline(hbonds,line);
 
     // begin hbond table in LaTeX. "00_Report/analysis_HBONDS.tex"
@@ -36,30 +35,37 @@ void parse_hbonds_avg(JobSettings settings)
     buffer << "\\hline" << std::endl;
     buffer << " Acceptor &  & Donor & $\\%_{sim}$ \\\\" << std::endl;
     buffer << "\\hline" << std::endl;
-
+    utils::append_to_file("00_Report/analysis_HBONDS.tex",buffer.str());
+    buffer.str("");
     // obtain pairs of residues to get counts over time.
     int table_counter = 1;
     while (getline(hbonds,line))
     {
+        if (line.find("#")!= std::string::npos)
+        {
+            continue;
+        }
+        std::stringstream dummy;
         std::string acceptor,donorH,donor,frames,frac,dist,angle;
-
         dummy.str(line);
         dummy >> acceptor >> donorH >> donor >> frames >> frac >> dist >> angle;
-        int acc_num,don_num;
-        acc_num = stoi(acceptor.substr(acceptor.find("_"),acceptor.find("@") - acceptor.find("_")));
-        don_num = stoi(donor.substr(donor.find("_"),donor.find("@") - donor.find("_")));
+        std::string acc_num, don_num;
+        acc_num = utils::string_between(acceptor, "_", "@");
+        don_num = utils::string_between(donor, "_", "@");
 
         // Add HBond datatable to report as formatted LaTeX table.
         std::string acc_res_name = acceptor.substr(0,acceptor.find("_"));
         std::string don_res_name = donor.substr(0,donor.find("_"));
-        std::string acc_atom_name = acceptor.substr(acceptor.find("@"),acceptor.size());
-        std::string donh_atom_name = donorH.substr(donorH.find("@"),donorH.size());
-        std::string don_atom_name = donor.substr(donor.find("@"),donor.size());
+        std::string acc_atom_name = acceptor.substr(acceptor.find("@")+1,acceptor.size());
+        std::string donh_atom_name = donorH.substr(donorH.find("@")+1,donorH.size());
+        std::string don_atom_name = donor.substr(donor.find("@")+1,donor.size());
         buffer << acc_res_name << acc_num << "." << acc_atom_name << " & --> & " << donh_atom_name << "-" << don_atom_name << "." << don_num << don_res_name << " & " << stod(frac)*100 << "\\% \\\\" << std::endl;
         if (table_counter % 5 == 0)
         {
             buffer << "\\hline" << std::endl;
         }
+        utils::append_to_file("00_Report/analysis_HBONDS.tex",buffer.str());
+        buffer.str("");
         table_counter++;
     }
     buffer << "\\hline" << std::endl;
@@ -174,6 +180,179 @@ void parse_nmd_to_mode_csv()
     return;
 }
 
+void rmsf_to_vmd(JobSettings settings)
+{
+    std::vector <double> rmsf_values;
+    std::ifstream file("06_Analysis/RMSF_ByRes.dat");
+    if (!file.is_open()) 
+    {
+        return;
+    }
+    std::string line;
+    std::stringstream dummy;
+    while (std::getline(file, line)) 
+    {
+        std::string::size_type pos = line.find('#');
+        if (pos != std::string::npos)
+        {
+            continue;
+        }
+        dummy.str(line);
+        double tmp;
+        dummy >> tmp >> tmp;
+        rmsf_values.push_back(tmp);
+    }
+    vmd::prepare_workspace();
+    vmd::new_molecule(settings.PRMTOP,settings.INPCRD);
+
+    // Prepare Representations
+    int rep_num = 0;
+    std::stringstream atom_select;
+    atom_select.str("");
+    if (settings.RECEPTOR_MASK != " ")
+    {
+        atom_select << "resid ";
+        atom_select << utils::string_between(settings.RECEPTOR_MASK, ":", "-");
+        if (settings.RECEPTOR_MASK.find("-"))
+        {
+            atom_select << " to " << utils::string_between(settings.RECEPTOR_MASK, "-", "x");   
+        }
+    }
+    else
+    {
+        atom_select << "resid ";
+        atom_select << utils::string_between(settings.COMPLEX_MASK, ":", "-");
+        if (settings.COMPLEX_MASK.find("-"))
+        {
+            atom_select << " to " << utils::string_between(settings.COMPLEX_MASK, "-", "x");   
+        }
+    }
+    vmd::display_NewCartoon(atom_select.str(), rep_num);  // 0th representation
+    rep_num++;
+    atom_select.str("");
+    if (settings.LIGAND_MASK != " ")
+    {
+        atom_select << "resid ";
+        atom_select << utils::string_between(settings.LIGAND_MASK, ":", "-");
+        if (settings.LIGAND_MASK.find("-"))
+        {
+            atom_select << " to " << utils::string_between(settings.LIGAND_MASK, "-", "x");   
+        }
+        vmd::display_Licorice(atom_select.str(), rep_num);
+        rep_num++;
+    }
+    // Set beta values to RMSF values by residue.
+    vmd::color_residue_by_beta(rmsf_values);
+
+    // Render images, 4 rotational orientations.
+    vmd::render_images("RMSF",4);
+
+    // Exit VMD
+    vmd::exit();
+
+    // Run VMD
+    vmd::run_vmd();
+
+    // Stitch rotation images together to single png.
+    utils::silent_shell("convert +append RMSF*.tga tmp.png");
+    utils::silent_shell("convert tmp.png -gravity West -annotate 90x90+0+0 'RMSF' RMSF_to_3D_structure.png");
+
+}
+
+void normal_mode_to_vmd(JobSettings settings, int num_modes)
+{
+    std::ifstream ifile("06_Analysis/normal_modes.csv");
+    if (!ifile.is_open())
+    {
+        return;
+    }
+    std::string line;
+    std::stringstream dummy;
+
+    //prepare vmd input file
+    vmd::prepare_workspace();
+    vmd::new_molecule(settings.PRMTOP,settings.INPCRD);
+
+    // Prepare Representations
+    int rep_num = 0;
+    std::stringstream atom_select;
+    atom_select.str("");
+    if (settings.RECEPTOR_MASK != " ")
+    {
+        atom_select << "resid ";
+        atom_select << utils::string_between(settings.RECEPTOR_MASK, ":", "-");
+        if (settings.RECEPTOR_MASK.find("-"))
+        {
+            atom_select << " to " << utils::string_between(settings.RECEPTOR_MASK, "-", "x");   
+        }
+    }
+    else
+    {
+        atom_select << "resid ";
+        atom_select << utils::string_between(settings.COMPLEX_MASK, ":", "-");
+        if (settings.COMPLEX_MASK.find("-"))
+        {
+            atom_select << " to " << utils::string_between(settings.COMPLEX_MASK, "-", "x");   
+        }
+    }
+    vmd::display_NewCartoon(atom_select.str(), rep_num);  // 0th representation
+    rep_num++;
+
+    if (settings.LIGAND_MASK != " ")
+    {
+        atom_select.str("");
+        atom_select << "resid ";
+        atom_select << utils::string_between(settings.LIGAND_MASK, ":", "-");
+        if (settings.LIGAND_MASK.find("-"))
+        {
+            atom_select << " to " << utils::string_between(settings.LIGAND_MASK, "-", "x");   
+        }
+        vmd::display_Licorice(atom_select.str(), rep_num);
+        rep_num++;
+    }
+
+    for (int i=0; i<num_modes; i++)  // First num_modes
+    {
+        std::vector<double> mode_array;
+        std::getline(ifile,line);
+        dummy.str(line);
+        while (dummy)
+        {
+            std::string mode_val;
+            dummy >> mode_val;
+            mode_val = mode_val.substr(0,mode_val.size()-1);
+            mode_array.push_back(stof(mode_val));
+        }
+        vmd::color_residue_by_beta(mode_array);
+        vmd::render_images("Mode_"+std::to_string(i+1),4);
+    }
+    
+    // Exit VMD
+    vmd::exit();
+
+    // Run VMD
+    vmd::run_vmd();
+
+    if (utils::CheckProgAvailable("convert")) // Compress .tga images to single useful file.
+    {
+        for (int i=0; i<num_modes; i++)  // First num_modes
+        {
+            // Stitch rotation images together to single png.
+            std::stringstream command;
+            command.str("");
+            command << "convert +append Mode_" << i+1 << "*.tga tmp.png";
+            utils::silent_shell(command.str().c_str());
+            command.str("");
+            command << "convert tmp.png -gravity West -annotate 90x90+0+0 'Mode "<< i+1 << "' Mode_" << i+1 << "to_3D_structure.png";
+            utils::silent_shell(command.str().c_str());
+        }
+        std::stringstream command;
+        command.str("");
+        command << "convert -append Mode_*_to_3D_structure.png First_" << num_modes << "_modes_to_3D.png";
+        utils::silent_shell(command.str().c_str());
+    }
+}
+
 namespace ambermachine 
 {
     void analysis(JobSettings settings,SlurmSettings slurm)
@@ -241,12 +420,16 @@ namespace ambermachine
             caption << "Ligand interaction energy between all residues in " << settings.RECEPTOR_MASK << " and residues in " << settings.LIGAND_MASK << ".";
             latex::figure_block_to_file("Ligand_Interaction_Energy",caption.str(),"00_Report/analysis_LIE.tex");
             latex::python_block_to_file(python::plot_lie(), "00_Report/analysis_LIE.tex");
+            
             // SASA
-            utils::append_to_file("analyse.py",python::plot_sasa());
-            caption.str("");
-            caption << "Solvent accessible surface areas (SASA) for receptor (" << settings.RECEPTOR_MASK << "), ligand (" << settings.LIGAND_MASK << "), and complex (" << settings.COMPLEX_MASK << "), plus buried interface (\\$A_{receptor} + A_{ligand} - A_{complex}\\$)";
-            latex::figure_block_to_file("SASA",caption.str(),"00_Report/analysis_SASA.tex");
-            latex::python_block_to_file(python::plot_sasa(), "00_Report/analysis_SASA.tex");
+            if (utils::CheckFileExists("SASA.dat"))
+            {
+                utils::append_to_file("analyse.py",python::plot_sasa());
+                caption.str("");
+                caption << "Solvent accessible surface areas (SASA) for receptor (" << settings.RECEPTOR_MASK << "), ligand (" << settings.LIGAND_MASK << "), and complex (" << settings.COMPLEX_MASK << "), plus buried interface (\\$A_{receptor} + A_{ligand} - A_{complex}\\$)";
+                latex::figure_block_to_file("SASA",caption.str(),"00_Report/analysis_SASA.tex");
+                latex::python_block_to_file(python::plot_sasa(), "00_Report/analysis_SASA.tex");
+            }
         }
 
         if (settings.NORMAL_MODES_MASK != " ") // Handle Normal Modes
@@ -271,15 +454,17 @@ namespace ambermachine
         prepare_clustering(settings);  // Handle Clustering (based on what...?)
 
         utils::append_to_file("cpptraj.in",settings.CPPTRAJ_EXTRA_COMMANDS);
+        slurm::update_job_name("Running_CPPTRAJ_Analyses");
 
         // run cpptraj.in
         utils::silent_shell("cpptraj < cpptraj.in >> cpptraj.out");
 
         // parse .nmd to .csv with parse_nmd_to_mode_csv(std::string nmdfile, std::string csvfile)
+        slurm::update_job_name("Parsing_CPPTRAJ_Outputs");
         parse_nmd_to_mode_csv();
 
         // run analyse.py
-        utils::silent_shell("python analyse.py");
+        utils::silent_shell("python analyse.py; rm analyse.py");
         
         // Parse the HBond results into a nice table.
         parse_hbonds_avg(settings);
@@ -287,15 +472,13 @@ namespace ambermachine
         // MMPBSA processing to plots!
 
         // generate ambermachine.vmd and run for each: RMSF, Normal Modes (first 4 modes), correl (if ligand + receptor mask)
-        // RMSF
-        // 1.  get array of values from RMSF.dat
-        // 2.  call vmdwriter functions
-        // 3.  run VMD command.
+        slurm::update_job_name("Generating_VMD_RMSF");
+        // RMSF (VMD)
+        rmsf_to_vmd(settings);
 
-        // Normal Modes
-        // 1.  get array(s) of modes from normal_modes.csv
-        // 2.  call vmdwriter function
-        // 3.  run vmd command.
+        // Normal Modes (VMD)
+        slurm::update_job_name("Generating_VMD_NormalModes");
+        normal_mode_to_vmd(settings, 4); // first 4 normal modes
 
         // If ligand mask + receptor mask:
         // 1.  get correlation array based on ligand mask?

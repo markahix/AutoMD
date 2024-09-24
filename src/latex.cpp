@@ -285,7 +285,7 @@ void latex::figure_block_to_file(std::string imagebase, std::string caption, std
     std::stringstream latex;
     latex << "\\begin{figure}[htbp] " << std::endl;
     latex << "\\centering" << std::endl;
-    latex << "\\includegraphics[width=0.9\textwidth]{" << imagebase << ".png}" << std::endl;
+    latex << "\\includegraphics[width=0.9\\textwidth]{" << imagebase << ".png}" << std::endl;
     latex << "\\caption{ " << caption << "}" << std::endl;
     latex << "\\label{fig:" << imagebase << "}" << std::endl;
     latex << "\\end{figure}" << std::endl;

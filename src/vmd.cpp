@@ -99,14 +99,14 @@ void vmd::color_atom_by_beta(std::vector<double> array)
       
 }
 
-void vmd::render_images(int num_rotations)
+void vmd::render_images(std::string basename, int num_rotations)
 {
     int rotation_degrees = 360/num_rotations;
     for (int i =0; i < num_rotations; i++)
     {
         std::stringstream vmd;
         vmd.str("");
-        vmd << "set filename rotation." << std::setw(4) << std::setfill('0') << i+1 << ".tga " <<std::endl;
+        vmd << "set filename " << basename << "_rotation." << std::setw(4) << std::setfill('0') << i+1 << ".tga " <<std::endl;
         vmd << "render TachyonLOptixInternal $filename" << std::endl;
         vmd << "rotate y by " << rotation_degrees << std::endl;
         utils::append_to_file("ambermachine.vmd",vmd.str());
@@ -134,7 +134,6 @@ proc make_trajectory_movie {} {
 make_trajectory_movie
 )"""";
     utils::append_to_file("ambermachine.vmd",vmd);
-
 }
 
 void vmd::exit()
@@ -147,7 +146,7 @@ void vmd::exit()
 
 void vmd::run_vmd()
 {
-    std::string command="vmd -e ambermachine.vmd -dispdev text";
+    std::string command="module load vmd/1.9.3; vmd -e ambermachine.vmd -dispdev text";
     utils::silent_shell(command.c_str());
 }
 

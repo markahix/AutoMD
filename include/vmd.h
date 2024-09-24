@@ -14,7 +14,7 @@ namespace vmd
     // void display_QuickSurf(std::string atom_selection, int rep_num);
     void color_residue_by_beta(std::vector<double> array);
     void color_atom_by_beta(std::vector<double> array);
-    void render_images(int num_rotations);
+    void render_images(std::string basename, int num_rotations);
     void trajectory_animation();
     void exit();
     void run_vmd();
