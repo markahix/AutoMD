@@ -23,6 +23,7 @@ void latex::write_main_tex()
     buffer << "\\usepackage{tcolorbox}" << std::endl;
     buffer << "\\usepackage{etoolboox}" << std::endl;
     buffer << "\\usepackage{placeins}" << std::endl;
+    buffer << "\\usepackage{longtable}" << std::endl;
     buffer << "\\title{Automatic Amber Molecular Dynamics Report}" << std::endl;
     buffer << "\\author{User: \\textbf{" << username <<"} \\\\ Wayne State University Grid}" << std::endl;
     buffer << "\\date{\\today}" << std::endl;
@@ -239,6 +240,7 @@ void latex::write_analysis_tex(JobSettings settings)
     {
         utils::write_to_file("00_Report/analysis_LIE.tex","");
         buffer << "\\input{analysis_LIE.tex}" << std::endl;
+        buffer << "\\input{analysis_SASA.tex}" << std::endl;
 
     }
 
@@ -283,7 +285,7 @@ void latex::figure_block_to_file(std::string imagebase, std::string caption, std
     std::stringstream latex;
     latex << "\\begin{figure}[htbp] " << std::endl;
     latex << "\\centering" << std::endl;
-    latex << "\\includegraphics[width=0.9\textwidth]{" << imagebase << ".png}" << std::endl;
+    latex << "\\includegraphics[width=0.9\\textwidth]{" << imagebase << ".png}" << std::endl;
     latex << "\\caption{ " << caption << "}" << std::endl;
     latex << "\\label{fig:" << imagebase << "}" << std::endl;
     latex << "\\end{figure}" << std::endl;

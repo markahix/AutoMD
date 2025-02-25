@@ -68,11 +68,11 @@ namespace ambermachine
         utils::append_to_file("00_Report/timeline.tex",buffer.str());
 
         // create job subdirectory.
-        std::experimental::filesystem::create_directory(job_subdir);
+        fs::create_directory(job_subdir);
 
         //identify current bead
         int startbead = 0;
-        for (std::experimental::filesystem::path p : std::experimental::filesystem::directory_iterator(job_subdir))
+        for (fs::path p : fs::directory_iterator(job_subdir))
         {
             if (p.extension() == ".mdcrd")
             {
@@ -87,18 +87,19 @@ namespace ambermachine
             lead_zero_number.str("");
             lead_zero_number << std::setw(4) << std::setfill('0') << startbead;
             std::string restart_file = job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".rst7";
-            std::experimental::filesystem::copy(restart_file,"current_step.rst7");
+            fs::copy(restart_file,"current_step.rst7");
         }
         
         // copy to /tmp
-        std::experimental::filesystem::copy(settings.PRMTOP,"/tmp/job.prmtop");
-        std::experimental::filesystem::copy("current_step.rst7","/tmp/last_step.rst7");
+        fs::copy(settings.PRMTOP,"/tmp/job.prmtop");
+        fs::copy("current_step.rst7","/tmp/last_step.rst7");
 
+        std::string filebasename = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + ".";
         // Loop over all cold steps
         for (int i=startbead; i < settings.NUM_COLD_STEPS; i++)
         {
             // change directory to /tmp
-            std::experimental::filesystem::current_path("/tmp/");
+            fs::current_path("/tmp/");
 
             // set current restraint value
             restraint_value = settings.MAX_RESTRAINT - (i * rest_interval);
@@ -118,10 +119,10 @@ namespace ambermachine
             std::stringstream lead_zero_number;
             lead_zero_number.str("");
             lead_zero_number << std::setw(4) << std::setfill('0') << i+1;
-            std::string mdin_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".in";
-            std::string mdout_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".out";
-            std::string restart_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".rst7";
-            std::string trajectory_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".mdcrd";
+            std::string mdin_file = filebasename+ lead_zero_number.str() + ".in";
+            std::string mdout_file = filebasename + lead_zero_number.str() + ".out";
+            std::string restart_file = filebasename + lead_zero_number.str() + ".rst7";
+            std::string trajectory_file = filebasename + lead_zero_number.str() + ".mdcrd";
 
             // load amber module, then run Amber (pmemd.cuda)
             std::cout << "DEBUG: In ColdRelax Function, slurm_amber_module is:  " << slurm.SLURM_amber_module << std::endl;
@@ -137,34 +138,39 @@ namespace ambermachine
             utils::silent_shell(buffer.str().c_str());
 
             // copy back from /tmp
-            std::experimental::filesystem::copy("mdin.in",mdin_file);
-            std::experimental::filesystem::remove("mdin.in");
+            fs::copy("mdin.in",mdin_file);
+            fs::remove("mdin.in");
 
-            std::experimental::filesystem::copy("current_step.rst7",restart_file);
-            std::experimental::filesystem::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",std::experimental::filesystem::copy_options::update_existing);
+            fs::copy("current_step.rst7",restart_file);
+            fs::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",fs::copy_options::update_existing);
             
-            std::experimental::filesystem::copy("current_step.rst7","last_step.rst7",std::experimental::filesystem::copy_options::update_existing);
-            std::experimental::filesystem::remove("current_step.rst7");
+            fs::copy("current_step.rst7","last_step.rst7",fs::copy_options::update_existing);
+            fs::remove("current_step.rst7");
 
-            std::experimental::filesystem::copy("mdout.out",mdout_file);
-            std::experimental::filesystem::remove("mdout.out");
+            fs::copy("mdout.out",mdout_file);
+            fs::remove("mdout.out");
             
-            std::experimental::filesystem::copy("trajectory.mdcrd",trajectory_file);
-            std::experimental::filesystem::remove("trajectory.mdcrd");
+            fs::copy("trajectory.mdcrd",trajectory_file);
+            fs::remove("trajectory.mdcrd");
             
             // Parse mdout into ColdEquil.csv
             std::string csv_file = std::getenv("SLURM_SUBMIT_DIR");
-            csv_file += "/ColdEquil.csv";
+            csv_file += "/06_Analysis/ColdEquil.csv";
 
             utils::mdout_to_csv(mdout_file,csv_file);
         }
         
         // return to original directory when finished in /tmp
-        std::experimental::filesystem::current_path(std::getenv("SLURM_SUBMIT_DIR"));
+        fs::current_path(std::getenv("SLURM_SUBMIT_DIR"));
+
+        if (utils::CheckFileExists("mdinfo"))
+        {
+            fs::remove("mdinfo");
+        }
 
         // Error Checking after finishing loop
         startbead = 0;
-        for (std::experimental::filesystem::path p : std::experimental::filesystem::directory_iterator(job_subdir))
+        for (fs::path p : fs::directory_iterator(job_subdir))
         {
             if (p.extension() == ".mdcrd")
             {
@@ -179,7 +185,7 @@ namespace ambermachine
 
         // Plot the ColdEquil.csv using python ... 
         slurm::update_job_name("Generating_Plots_Cold_Equilibration");
-        python::plot_csv_data("ColdEquil.csv");
+        python::plot_csv_data("06_Analysis/ColdEquil.csv");
 
         // Update report with completed cold equilibration figures, checking if each one exists as we go.
         if (utils::CheckFileExists("00_Report/ColdEquil_Figure_01.png"))

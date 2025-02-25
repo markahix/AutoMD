@@ -6,6 +6,8 @@
 #include "slurm.h"
 #include "latex.h"
 #include "python.h"
+#include "cpptraj.h"
+#include "vmd.h"
 
 namespace ambermachine
 {

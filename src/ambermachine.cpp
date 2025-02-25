@@ -46,7 +46,7 @@ counterions_mask   :K+,Cl-
 #######################
 slurm_partition    earwp
 slurm_queue        express
-slurm_gpu          gpu:nvidia_a30_1g.6gb:1
+slurm_gpu          gpu:nvidia_a30_1g.12gb:2
 slurm_nodelist     arw4,arw5  #delete if you don't care what nodes are used.
 slurm_exclude_nodes arw1,arw2,arw3  #delete if you don't care what nodes are used.
 slurm_amber_module Amber/20-cuda-11
@@ -101,6 +101,7 @@ slurm_amber_module Amber/20-cuda-11
                 if (cpptraj_extra_commands)
                 {
                     job_settings.CPPTRAJ_EXTRA_COMMANDS += line;
+                    job_settings.CPPTRAJ_EXTRA_COMMANDS += "\n";
                     continue;
                 }
                 pos = line.find("%BEGIN_CPPTRAJ");

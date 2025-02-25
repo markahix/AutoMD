@@ -55,8 +55,11 @@ JobSettings::JobSettings()
     std::string SOLVENT_MASK=" ";
     std::string COUNTERIONS_MASK=" ";
     std::string CPPTRAJ_EXTRA_COMMANDS=" ";
-
-
-    
 }
 
+
+
+JobSettings::~JobSettings()
+{
+    
+}

@@ -20,6 +20,8 @@
 #include <ctime>
 #include <set>
 
+namespace fs = std::experimental::filesystem;
+
 namespace utils
 {
     void splash_screen();
@@ -37,6 +39,7 @@ namespace utils
     std::string LastLineOfFile(std::string filename);
     void mdout_to_csv(std::string filename,std::string csv_file);
     int count_lines_in_file(std::string filename);
+    std::string string_between(std::string incoming, std::string first_delim, std::string second_delim);
 }
 
 

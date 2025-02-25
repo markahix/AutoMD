@@ -18,6 +18,8 @@
 #include "classes.h"
 #include "slurm.h"
 
+// namespace fs = std::experimental::filesystem;
+
 namespace utils
 {
     void splash_screen()
@@ -129,7 +131,7 @@ namespace utils
  
     bool CheckFileExists(std::string filename)
     {
-        if ( std::experimental::filesystem::exists(filename) )
+        if ( fs::exists(filename) )
         {
             return 1;
         }
@@ -145,7 +147,7 @@ namespace utils
         auto tm = *std::localtime(&t);
         std::stringstream buffer;
         buffer.str("");
-        buffer << std::put_time(&tm, "%d-%m-%Y %H-%M-%S");
+        buffer << std::put_time(&tm, "%Y.%m.%d %H:%M:%S");
         return buffer.str();
     }
  
@@ -407,5 +409,20 @@ namespace utils
             count ++;
         }
         return count;
+    }
+
+    std::string string_between(std::string incoming, std::string first_delim, std::string second_delim)
+    {
+        unsigned first = incoming.find(first_delim);
+        if (first == std::string::npos)
+        {
+            return incoming;
+        }
+        unsigned last = incoming.find(second_delim);
+        if (last == std::string::npos)
+        {
+            return incoming.substr(first + 1, incoming.size());
+        }
+        return incoming.substr(first + 1, last - first - 1);
     }
 }
