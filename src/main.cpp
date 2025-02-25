@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
 
     // Move to $SLURM_SUBMIT_DIR (should already be there, but just in case...)
-    std::experimental::filesystem::current_path(std::getenv("SLURM_SUBMIT_DIR"));
+    fs::current_path(std::getenv("SLURM_SUBMIT_DIR"));
     slurm.SLURM_JOB_ID = std::getenv("SLURM_JOB_ID");
 
     // Identify the correct function to call based on provided command line flag.

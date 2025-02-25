@@ -18,6 +18,8 @@
 #include "classes.h"
 #include "slurm.h"
 
+// namespace fs = std::experimental::filesystem;
+
 namespace utils
 {
     void splash_screen()
@@ -129,7 +131,7 @@ namespace utils
  
     bool CheckFileExists(std::string filename)
     {
-        if ( std::experimental::filesystem::exists(filename) )
+        if ( fs::exists(filename) )
         {
             return 1;
         }

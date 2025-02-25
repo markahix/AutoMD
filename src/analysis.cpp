@@ -82,7 +82,7 @@ void parse_cpptraj_results(JobSettings settings, SlurmSettings slurm)
     buffer.str("");
     buffer << "parm " << settings.PRMTOP << std::endl;
     
-    for (std::experimental::filesystem::path p : std::experimental::filesystem::directory_iterator("05_Production/"))
+    for (fs::path p : fs::directory_iterator("05_Production/"))
     {
         if (p.extension() == ".mdcrd")
         {
@@ -106,7 +106,7 @@ void parse_cpptraj_results(JobSettings settings, SlurmSettings slurm)
     clustering << "cluster data ";
     int i = 1;
     int time_line_files = utils::count_lines_in_file("RMSD.dat");
-    for (std::experimental::filesystem::path p : std::experimental::filesystem::directory_iterator("./"))
+    for (fs::path p : fs::directory_iterator("./"))
     {
         if (p.extension() == ".dat")
         {
@@ -172,7 +172,7 @@ void parse_nmd_to_mode_csv()
             line_buf >> x >> y >> z;
             double norm;
             norm = sqrt(x*x + y*y + z*z)/eigenval;
-            ofile << norm << ", ";
+            ofile << norm << " ";
         }
         ofile <<  std::endl;
     }
@@ -189,14 +189,14 @@ void rmsf_to_vmd(JobSettings settings)
         return;
     }
     std::string line;
-    std::stringstream dummy;
-    while (std::getline(file, line)) 
+    
+    while (getline(file, line)) 
     {
-        std::string::size_type pos = line.find('#');
-        if (pos != std::string::npos)
+        if (line.find('#') != std::string::npos) //skip comment lines
         {
             continue;
         }
+        std::stringstream dummy;
         dummy.str(line);
         double tmp;
         dummy >> tmp >> tmp;
@@ -213,7 +213,7 @@ void rmsf_to_vmd(JobSettings settings)
     {
         atom_select << "resid ";
         atom_select << utils::string_between(settings.RECEPTOR_MASK, ":", "-");
-        if (settings.RECEPTOR_MASK.find("-"))
+        if (settings.RECEPTOR_MASK.find("-") != std::string::npos)
         {
             atom_select << " to " << utils::string_between(settings.RECEPTOR_MASK, "-", "x");   
         }
@@ -222,7 +222,7 @@ void rmsf_to_vmd(JobSettings settings)
     {
         atom_select << "resid ";
         atom_select << utils::string_between(settings.COMPLEX_MASK, ":", "-");
-        if (settings.COMPLEX_MASK.find("-"))
+        if (settings.COMPLEX_MASK.find("-") != std::string::npos)
         {
             atom_select << " to " << utils::string_between(settings.COMPLEX_MASK, "-", "x");   
         }
@@ -232,9 +232,10 @@ void rmsf_to_vmd(JobSettings settings)
     atom_select.str("");
     if (settings.LIGAND_MASK != " ")
     {
+        std::cout << "Adding licorice representation to VMD image for ligand." << std::endl;
         atom_select << "resid ";
         atom_select << utils::string_between(settings.LIGAND_MASK, ":", "-");
-        if (settings.LIGAND_MASK.find("-"))
+        if (settings.LIGAND_MASK.find("-") != std::string::npos)
         {
             atom_select << " to " << utils::string_between(settings.LIGAND_MASK, "-", "x");   
         }
@@ -255,7 +256,7 @@ void rmsf_to_vmd(JobSettings settings)
 
     // Stitch rotation images together to single png.
     utils::silent_shell("convert +append RMSF*.tga tmp.png");
-    utils::silent_shell("convert tmp.png -gravity West -annotate 90x90+0+0 'RMSF' RMSF_to_3D_structure.png");
+    utils::silent_shell("convert tmp.png -gravity West -annotate 90x90+0+0 'RMSF' RMSF_to_3D_structure.png; mv ambermachine.vmd ambermachine_rmsf.vmd");
 
 }
 
@@ -281,7 +282,7 @@ void normal_mode_to_vmd(JobSettings settings, int num_modes)
     {
         atom_select << "resid ";
         atom_select << utils::string_between(settings.RECEPTOR_MASK, ":", "-");
-        if (settings.RECEPTOR_MASK.find("-"))
+        if (settings.RECEPTOR_MASK.find("-") != std::string::npos)
         {
             atom_select << " to " << utils::string_between(settings.RECEPTOR_MASK, "-", "x");   
         }
@@ -290,7 +291,7 @@ void normal_mode_to_vmd(JobSettings settings, int num_modes)
     {
         atom_select << "resid ";
         atom_select << utils::string_between(settings.COMPLEX_MASK, ":", "-");
-        if (settings.COMPLEX_MASK.find("-"))
+        if (settings.COMPLEX_MASK.find("-") != std::string::npos)
         {
             atom_select << " to " << utils::string_between(settings.COMPLEX_MASK, "-", "x");   
         }
@@ -303,7 +304,7 @@ void normal_mode_to_vmd(JobSettings settings, int num_modes)
         atom_select.str("");
         atom_select << "resid ";
         atom_select << utils::string_between(settings.LIGAND_MASK, ":", "-");
-        if (settings.LIGAND_MASK.find("-"))
+        if (settings.LIGAND_MASK.find("-") != std::string::npos)
         {
             atom_select << " to " << utils::string_between(settings.LIGAND_MASK, "-", "x");   
         }
@@ -320,7 +321,6 @@ void normal_mode_to_vmd(JobSettings settings, int num_modes)
         {
             std::string mode_val;
             dummy >> mode_val;
-            mode_val = mode_val.substr(0,mode_val.size()-1);
             mode_array.push_back(stof(mode_val));
         }
         vmd::color_residue_by_beta(mode_array);
@@ -348,7 +348,7 @@ void normal_mode_to_vmd(JobSettings settings, int num_modes)
         }
         std::stringstream command;
         command.str("");
-        command << "convert -append Mode_*_to_3D_structure.png First_" << num_modes << "_modes_to_3D.png";
+        command << "convert -append Mode_*_to_3D_structure.png First_" << num_modes << "_modes_to_3D.png; mv ambermachine.vmd ambermachine_normalmodes.vmd";
         utils::silent_shell(command.str().c_str());
     }
 }
@@ -364,9 +364,6 @@ namespace ambermachine
         buffer << "Final Analysis & \\texttt{" << utils::GetTimeAndDate()<< "} & \\textbf{" << std::getenv("SLURM_JOB_ID") << "} \\\\" << std::endl;
         buffer << "\\hline" << std::endl;
         utils::append_to_file("00_Report/timeline.tex",buffer.str());
-
-        // make 06_Analysis/ subdirectory
-        std::experimental::filesystem::create_directory("06_Analysis/");
 
         // prepare cpptraj.in, analyse.py, and report latex
         utils::write_to_file("cpptraj.in",cpptraj::preamble(settings));

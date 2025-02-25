@@ -3,9 +3,9 @@
 int get_replicate_count(std::string path)
 {
     int r = 1;
-    for(const std::experimental::filesystem::directory_entry& entry : std::experimental::filesystem::directory_iterator{path})
+    for(const fs::directory_entry& entry : fs::directory_iterator{path})
     {
-        if (std::experimental::filesystem::is_directory(entry.path()))
+        if (fs::is_directory(entry.path()))
         {
             std::string junk = entry.path().c_str();
             if (junk.find("Replicate_") != std::string::npos)
@@ -53,15 +53,15 @@ int cpptraj_mask_check(std::string prmtop, std::string inpcrd, std::string mask)
                     if (stoi(tmp) == 0)
                     {  
                         file.close();
-                        std::experimental::filesystem::remove("cpptraj_mask_test.out");
-                        std::experimental::filesystem::remove("cpptraj_mask_test.in");
+                        fs::remove("cpptraj_mask_test.out");
+                        fs::remove("cpptraj_mask_test.in");
                         return 1;
                     }
                     else
                     {
                         file.close();
-                        std::experimental::filesystem::remove("cpptraj_mask_test.out");
-                        std::experimental::filesystem::remove("cpptraj_mask_test.in");
+                        fs::remove("cpptraj_mask_test.out");
+                        fs::remove("cpptraj_mask_test.in");
                         return 0;
                     }
                 }
@@ -183,7 +183,7 @@ bool generate_mmpbsa_inputs(JobSettings settings)
 {
     slurm::update_job_name("Generating_MMPBSA_Inputs");
     // make MMPBSA_Inputs folder
-    std::experimental::filesystem::create_directory("MMPBSA_Inputs/");
+    fs::create_directory("MMPBSA_Inputs/");
 
     // Generate complex.prmtop
     std::stringstream buffer;
@@ -270,11 +270,13 @@ namespace ambermachine
         std::stringstream buffer;
         buffer.str("");
         buffer << "Replicate_" <<  get_replicate_count("./");
-        std::experimental::filesystem::create_directory(buffer.str());
-        std::experimental::filesystem::copy(settings.PRMTOP,buffer.str());
-        std::experimental::filesystem::copy(settings.INPCRD,buffer.str());
-        std::experimental::filesystem::copy("amberinput.in",buffer.str());
-        std::experimental::filesystem::current_path(buffer.str());
+        fs::create_directory(buffer.str());
+        fs::copy(settings.PRMTOP,buffer.str());
+        fs::copy(settings.INPCRD,buffer.str());
+        fs::copy("amberinput.in",buffer.str());
+        fs::current_path(buffer.str());
+        // make 06_Analysis/ subdirectory
+        fs::create_directory("06_Analysis/");
 
 
         // if MMPBSA, generate MMPBSA inputs.

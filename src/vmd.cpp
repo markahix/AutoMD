@@ -5,7 +5,7 @@ void vmd::prepare_workspace()
     std::string vmd = R"""(display update on
 color add item Display Background white
 color Display Background white
-display projection perspective
+display projection orthographic
 display culling off
 axes location off
 display rendermode Normal
@@ -20,7 +20,7 @@ void vmd::new_molecule(std::string prmtop,std::string restart)
     std::stringstream vmd;
     vmd.str("");
     vmd << "mol new " << prmtop << " type parm7 waitfor all" << std::endl;
-    vmd << "mol addfile " << restart << "type rst7 waitfor all" << std::endl;
+    vmd << "mol addfile " << restart << " type rst7 waitfor all" << std::endl;
     vmd << "mol delrep 0 top" << std::endl;
     utils::append_to_file("ambermachine.vmd",vmd.str());
 }
@@ -101,13 +101,59 @@ void vmd::color_atom_by_beta(std::vector<double> array)
 
 void vmd::render_images(std::string basename, int num_rotations)
 {
+    std::stringstream vmd;
+    // set window scaling
+    vmd.str("");
+    vmd << R""""(
+proc get_scale_factor {molid selec} {
+  set sel [atomselect $molid all]
+  set coords [$sel get {x y z}]
+  set coord [lvarpop coords]
+  lassign $coord minx miny minz
+  lassign $coord maxx maxy maxz
+  foreach coord $coords {
+    lassign $coord x y z
+    if {$x < $minx} {set minx $x} else {if {$x > $maxx} {set maxx $x}}
+    if {$y < $miny} {set miny $y} else {if {$y > $maxy} {set maxy $y}}
+    if {$z < $minz} {set minz $z} else {if {$z > $maxz} {set maxz $z}}
+  }
+  set rx [expr $maxx - $minx]
+  set ry [expr $maxy - $miny]
+  set rz [expr $maxz - $minz]
+  set sel [atomselect $molid $selec]
+  set coords [$sel get {x y z}]
+  set coord [lvarpop coords]
+  lassign $coord minx miny minz
+  lassign $coord maxx maxy maxz
+  foreach coord $coords {
+    lassign $coord x y z
+    if {$x < $minx} {set minx $x} else {if {$x > $maxx} {set maxx $x}}
+    if {$y < $miny} {set miny $y} else {if {$y > $maxy} {set maxy $y}}
+    if {$z < $minz} {set minz $z} else {if {$z > $maxz} {set maxz $z}}
+  }
+  set x_r [expr $maxx - $minx]
+  set y_r [expr $maxy - $miny]
+  set z_r [expr $maxz - $minz]
+  set scale_x [expr $rx / $x_r]
+  set scale_y [expr $ry / $y_r]
+  set scale_z [expr $rz / $z_r]
+  set s_factor 10
+  if {$s_factor > $scale_x} {set s_factor $scale_x}
+  if {$s_factor > $scale_y} {set s_factor $scale_y}
+  if {$s_factor > $scale_z} {set s_factor $scale_z}    
+  return $s_factor
+}
+set scale_by [get_scale_factor 0 "resid 1 to 460"]
+scale by $scale_by
+)"""";
+    utils::append_to_file("ambermachine.vmd",vmd.str());
+
     int rotation_degrees = 360/num_rotations;
     for (int i =0; i < num_rotations; i++)
     {
-        std::stringstream vmd;
         vmd.str("");
         vmd << "set filename " << basename << "_rotation." << std::setw(4) << std::setfill('0') << i+1 << ".tga " <<std::endl;
-        vmd << "render TachyonLOptixInternal $filename" << std::endl;
+        vmd << "render TachyonLOptiXInternal $filename" << std::endl;
         vmd << "rotate y by " << rotation_degrees << std::endl;
         utils::append_to_file("ambermachine.vmd",vmd.str());
     }
@@ -128,7 +174,7 @@ proc make_trajectory_movie {} {
                 display update
         # take the picture
         set filename VMD_Images/temp.[format \"%05d\" [expr $i/1]].tga
-        render TachyonLOptixInternal $filename
+        render TachyonLOptiXInternal $filename
     }
 }
 make_trajectory_movie
@@ -146,7 +192,7 @@ void vmd::exit()
 
 void vmd::run_vmd()
 {
-    std::string command="module load vmd/1.9.3; vmd -e ambermachine.vmd -dispdev text";
+    std::string command="module load vmd/1.9.3; vmd -e ambermachine.vmd >> vmd.log";
     utils::silent_shell(command.c_str());
 }
 

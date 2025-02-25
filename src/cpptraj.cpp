@@ -10,7 +10,7 @@ void PrepareCPPTRAJInput(JobSettings settings)
 
     // Load trajectory, autoimage, strip solvent
     cpptraj << "parm " << settings.PRMTOP << std::endl;
-    for (std::experimental::filesystem::path p : std::experimental::filesystem::directory_iterator("05_Production/"))
+    for (fs::path p : fs::directory_iterator("05_Production/"))
     {
         if (p.extension() == ".mdcrd")
         {
@@ -44,7 +44,7 @@ void PrepareCPPTRAJInput(JobSettings settings)
     if (settings.NORMAL_MODES_MASK != " ")
     {
         cpptraj << "matrix covar name nma_covar " << settings.NORMAL_MODES_MASK << std::endl;
-        cpptraj << "diagmatrix nma_covar out nma_covar.mat vecs 100 reduce nmwiz nmwizvecs 100 nmwizfile 06_Analysis/nma_first_100_modes.nmd nmwizmask " << settings.NORMAL_MODES_MASK << std::endl;
+        cpptraj << "diagmatrix nma_covar out 06_Analysis/nma_covar.mat vecs 100 reduce nmwiz nmwizvecs 100 nmwizfile 06_Analysis/nma_first_100_modes.nmd nmwizmask " << settings.NORMAL_MODES_MASK << std::endl;
     }
     if (settings.LIGAND_MASK != " " && settings.RECEPTOR_MASK != " ")
     {
@@ -73,7 +73,7 @@ namespace cpptraj
         std::stringstream cpptraj;
         cpptraj.str("");
         cpptraj << "parm " << settings.PRMTOP << std::endl;
-        for (std::experimental::filesystem::path p : std::experimental::filesystem::directory_iterator("05_Production/"))
+        for (fs::path p : fs::directory_iterator("05_Production/"))
         {
             if (p.extension() == ".mdcrd")
             {
@@ -130,7 +130,7 @@ namespace cpptraj
         std::stringstream cpptraj;
         cpptraj.str("");
         cpptraj << "matrix covar name nma_covar " << settings.NORMAL_MODES_MASK << std::endl;
-        cpptraj << "diagmatrix nma_covar out nma_covar.mat vecs 100 reduce nmwiz nmwizvecs 100 nmwizfile 06_Analysis/nma_first_100_modes.nmd nmwizmask " << settings.NORMAL_MODES_MASK << std::endl;
+        cpptraj << "diagmatrix nma_covar out 06_Analysis/nma_covar.mat vecs 100 reduce nmwiz nmwizvecs 100 nmwizfile 06_Analysis/nma_first_100_modes.nmd nmwizmask " << settings.NORMAL_MODES_MASK << std::endl;
         return cpptraj.str();
     }
 }

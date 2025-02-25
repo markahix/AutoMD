@@ -59,7 +59,7 @@ namespace ambermachine
         write_mdin_minimize(settings);
 
         // create 01_Minimization directory.
-        std::experimental::filesystem::create_directory(job_subdir);
+        fs::create_directory(job_subdir);
 
         // set filenames
         std::string mdin_file = job_subdir + "/" + file_prefix + ".0000.in";
@@ -82,9 +82,11 @@ namespace ambermachine
         utils::silent_shell(buffer.str().c_str());
 
         // move mdin.in to numbered file in appropriate folder
-        std::experimental::filesystem::rename("mdin.in",mdin_file);
-        // Copy current_step.rst7 to numbered restart in appropriate folder.
-//        std::experimental::filesystem::copy("current_step.rst7",restart_file);
+        fs::rename("mdin.in",mdin_file);
+        if (utils::CheckFileExists("mdinfo"))
+        {
+            fs::remove("mdinfo");
+        }
 
         // Complete minimization job stage
         slurm::update_job_name("Completing_Minimization");

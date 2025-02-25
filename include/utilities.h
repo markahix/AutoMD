@@ -20,6 +20,8 @@
 #include <ctime>
 #include <set>
 
+namespace fs = std::experimental::filesystem;
+
 namespace utils
 {
     void splash_screen();
