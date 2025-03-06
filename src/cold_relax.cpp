@@ -54,8 +54,6 @@ namespace ambermachine
 {
     void cold_equilibration(JobSettings settings,SlurmSettings slurm)
     {
-        std::string job_subdir = "02_ColdDensityEquilibration";
-        std::string file_prefix = "cold_equil";
         double restraint_value;
         double rest_interval = settings.MAX_RESTRAINT / (settings.NUM_COLD_STEPS - 1);
 
@@ -68,11 +66,11 @@ namespace ambermachine
         utils::append_to_file("00_Report/timeline.tex",buffer.str());
 
         // create job subdirectory.
-        fs::create_directory(job_subdir);
+        fs::create_directory("02_ColdDensityEquilibration/");
 
         //identify current bead
         int startbead = 0;
-        for (fs::path p : fs::directory_iterator(job_subdir))
+        for (fs::path p : fs::directory_iterator("02_ColdDensityEquilibration/"))
         {
             if (p.extension() == ".mdcrd")
             {
@@ -86,7 +84,7 @@ namespace ambermachine
             std::stringstream lead_zero_number;
             lead_zero_number.str("");
             lead_zero_number << std::setw(4) << std::setfill('0') << startbead;
-            std::string restart_file = job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".rst7";
+            std::string restart_file = "02_ColdDensityEquilibration/cold_equil." + lead_zero_number.str() + ".rst7";
             fs::copy(restart_file,"current_step.rst7");
         }
         
@@ -94,7 +92,9 @@ namespace ambermachine
         fs::copy(settings.PRMTOP,"/tmp/job.prmtop");
         fs::copy("current_step.rst7","/tmp/last_step.rst7");
 
-        std::string filebasename = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + ".";
+        std::string csv_file = std::getenv("SLURM_SUBMIT_DIR");
+        csv_file += "/06_Analysis/ColdEquil.csv";
+        std::string filebasename = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/02_ColdDensityEquilibration/cold_equil.";
         // Loop over all cold steps
         for (int i=startbead; i < settings.NUM_COLD_STEPS; i++)
         {
@@ -125,39 +125,8 @@ namespace ambermachine
             std::string trajectory_file = filebasename + lead_zero_number.str() + ".mdcrd";
 
             // load amber module, then run Amber (pmemd.cuda)
-            std::cout << "DEBUG: In ColdRelax Function, slurm_amber_module is:  " << slurm.SLURM_amber_module << std::endl;
-            buffer.str("");
-            buffer << "module load " << slurm.SLURM_amber_module << "; $AMBERHOME/bin/pmemd.cuda -O";
-            buffer << " -i mdin.in";
-            buffer << " -o mdout.out";
-            buffer << " -p job.prmtop";
-            buffer << " -c last_step.rst7";
-            buffer << " -r current_step.rst7";
-            buffer << " -x trajectory.mdcrd";
-            buffer << " -ref last_step.rst7";
-            utils::silent_shell(buffer.str().c_str());
-
-            // copy back from /tmp
-            fs::copy("mdin.in",mdin_file);
-            fs::remove("mdin.in");
-
-            fs::copy("current_step.rst7",restart_file);
-            fs::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",fs::copy_options::update_existing);
-            
-            fs::copy("current_step.rst7","last_step.rst7",fs::copy_options::update_existing);
-            fs::remove("current_step.rst7");
-
-            fs::copy("mdout.out",mdout_file);
-            fs::remove("mdout.out");
-            
-            fs::copy("trajectory.mdcrd",trajectory_file);
-            fs::remove("trajectory.mdcrd");
-            
-            // Parse mdout into ColdEquil.csv
-            std::string csv_file = std::getenv("SLURM_SUBMIT_DIR");
-            csv_file += "/06_Analysis/ColdEquil.csv";
-
-            utils::mdout_to_csv(mdout_file,csv_file);
+            AmberLoop(slurm);
+            AmberCopyBack(mdin_file,restart_file,mdout_file,trajectory_file,csv_file);
         }
         
         // return to original directory when finished in /tmp
@@ -170,7 +139,7 @@ namespace ambermachine
 
         // Error Checking after finishing loop
         startbead = 0;
-        for (fs::path p : fs::directory_iterator(job_subdir))
+        for (fs::path p : fs::directory_iterator("02_ColdDensityEquilibration/"))
         {
             if (p.extension() == ".mdcrd")
             {
@@ -228,6 +197,8 @@ namespace ambermachine
         utils::append_to_file("00_Report/cold_equil.tex",report_update);
         }
 
+        // Compress 02_ColdDensityEquilibration/ to 02_ColdDensityEquilibration.tar.gz, then remove the folder
+        utils::compress_and_delete("02_ColdDensityEquilibration");
         // Complete minimization job stage
         slurm::update_job_name("Completing_Cold_Equilibration");
         // Compile Current Report

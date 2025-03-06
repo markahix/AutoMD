@@ -58,8 +58,6 @@ namespace ambermachine
 {
     void hot_equilibration(JobSettings settings,SlurmSettings slurm)
     {
-        std::string job_subdir = "04_HotDensityEquilibration";
-        std::string file_prefix = "hot_equil";
         double restraint_value;
         double rest_interval = settings.MAX_RESTRAINT / (settings.NUM_HOT_STEPS - 1);
 
@@ -72,11 +70,11 @@ namespace ambermachine
         utils::append_to_file("00_Report/timeline.tex",buffer.str());
 
         // create job subdirectory.
-        fs::create_directory(job_subdir);
+        fs::create_directory("04_HotDensityEquilibration/");
 
         //identify current bead
         int startbead = 0;
-        for (fs::path p : fs::directory_iterator(job_subdir))
+        for (fs::path p : fs::directory_iterator("04_HotDensityEquilibration/"))
         {
             if (p.extension() == ".mdcrd")
             {
@@ -90,7 +88,7 @@ namespace ambermachine
             std::stringstream lead_zero_number;
             lead_zero_number.str("");
             lead_zero_number << std::setw(4) << std::setfill('0') << startbead;
-            std::string restart_file = job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".rst7";
+            std::string restart_file = "04_HotDensityEquilibration/hot_equil." + lead_zero_number.str() + ".rst7";
             fs::copy(restart_file,"current_step.rst7");
         }
         
@@ -98,9 +96,14 @@ namespace ambermachine
         fs::copy(settings.PRMTOP,"/tmp/job.prmtop");
         fs::copy("current_step.rst7","/tmp/last_step.rst7");
 
+
+        std::string filebasename = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/04_HotDensityEquilibration/hot_equil.";
+        std::string csv_file = std::getenv("SLURM_SUBMIT_DIR");
+        csv_file += "/06_Analysis/HotEquil.csv";
         // Loop over all hot steps
         for (int i=startbead; i < settings.NUM_HOT_STEPS; i++)
         {
+
             // change directory to /tmp
             fs::current_path("/tmp/");
 
@@ -118,51 +121,21 @@ namespace ambermachine
             slurm::update_job_name(jobname.str());
             write_mdin_hot_relax(settings,restraint_value);
 
-
             // set filenames
             std::stringstream lead_zero_number;
             lead_zero_number.str("");
             lead_zero_number << std::setw(4) << std::setfill('0') << i+1;
-            std::string mdin_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".in";
-            std::string mdout_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".out";
-            std::string restart_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".rst7";
-            std::string trajectory_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".mdcrd";
+            std::string mdin_file = filebasename+ lead_zero_number.str() + ".in";
+            std::string mdout_file = filebasename + lead_zero_number.str() + ".out";
+            std::string restart_file = filebasename + lead_zero_number.str() + ".rst7";
+            std::string trajectory_file = filebasename + lead_zero_number.str() + ".mdcrd";
 
             // load amber module, then run Amber (pmemd.cuda)
             std::cout << "DEBUG: In Hot Equilibration Function, slurm_amber_module is:  " << slurm.SLURM_amber_module << std::endl;
 
-            buffer.str("");
-            buffer << "module load " << slurm.SLURM_amber_module << "; $AMBERHOME/bin/pmemd.cuda -O";
-            buffer << " -i mdin.in";
-            buffer << " -o mdout.out";
-            buffer << " -p job.prmtop";
-            buffer << " -c last_step.rst7";
-            buffer << " -r current_step.rst7";
-            buffer << " -x trajectory.mdcrd";
-            buffer << " -ref last_step.rst7";
-            utils::silent_shell(buffer.str().c_str());
+            AmberLoop(slurm);
+            AmberCopyBack(mdin_file, restart_file, mdout_file, trajectory_file, csv_file);
 
-            // copy back from /tmp
-            fs::copy("mdin.in",mdin_file);
-            fs::remove("mdin.in");
-
-            fs::copy("current_step.rst7",restart_file);
-            fs::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",fs::copy_options::update_existing);
-            
-            fs::copy("current_step.rst7","last_step.rst7",fs::copy_options::update_existing);
-            fs::remove("current_step.rst7");
-
-            fs::copy("mdout.out",mdout_file);
-            fs::remove("mdout.out");
-            
-            fs::copy("trajectory.mdcrd",trajectory_file);
-            fs::remove("trajectory.mdcrd");
-            
-            // Parse mdout into HotEquil.csv
-            std::string csv_file = std::getenv("SLURM_SUBMIT_DIR");
-            csv_file += "/06_Analysis/HotEquil.csv";
-
-            utils::mdout_to_csv(mdout_file,csv_file);
         }
         if (utils::CheckFileExists("mdinfo"))
         {
@@ -174,7 +147,7 @@ namespace ambermachine
 
         // Error Checking after finishing loop
         startbead = 0;
-        for (fs::path p : fs::directory_iterator(job_subdir))
+        for (fs::path p : fs::directory_iterator("04_HotDensityEquilibration/"))
         {
             if (p.extension() == ".mdcrd")
             {
@@ -232,6 +205,8 @@ namespace ambermachine
         utils::append_to_file("00_Report/hot_equil.tex",report_update);
         }
 
+        // Compress 04_HotDensityEquilibration/ to 04_HotDensityEquilibration.tar.gz, then remove the folder
+        utils::compress_and_delete("04_HotDensityEquilibration");
         // Complete hot equilibration job stage
         slurm::update_job_name("Completing_Hot_Equilibration");
         // Compile Current Report
@@ -245,3 +220,5 @@ namespace ambermachine
         return;
     }
 }
+
+

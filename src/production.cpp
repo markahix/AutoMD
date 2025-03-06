@@ -2,20 +2,6 @@
 
 void write_mdin_production(JobSettings settings)
 {
-    int colpos = settings.COMPLEX_MASK.find(":");
-    int dashpos = settings.COMPLEX_MASK.find("-");
-    std::string startres,endres;
-    if (dashpos != std::string::npos)
-    {
-        startres = settings.COMPLEX_MASK.substr(colpos + 1, dashpos - colpos);
-        endres = settings.COMPLEX_MASK.substr(dashpos + 1, settings.COMPLEX_MASK.length());
-    }
-    else
-    {
-        startres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
-        endres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
-    } 
-    std::stringstream buffer;
     std::string heat_script = R"HEATSCRIPT(
 Molecular Dynamics Production
  &cntrl
@@ -45,9 +31,7 @@ Molecular Dynamics Production
  &wt type='REST', istep1=000000,istep2=5000, &end
  &wt type='END'  &end /
 )HEATSCRIPT";
-    buffer.str("");
-    buffer << heat_script << std::endl;
-    utils::write_to_file("mdin.in",buffer.str());
+    utils::write_to_file("mdin.in",heat_script);
     return;
 }
 
@@ -55,9 +39,6 @@ namespace ambermachine
 {
     void production(JobSettings settings,SlurmSettings slurm)
     {
-        std::string job_subdir = "05_Production";
-        std::string file_prefix = "prod";
-
         // Update report
         slurm::update_job_name("Updating_Report_Timeline");
         std::stringstream buffer;
@@ -67,11 +48,11 @@ namespace ambermachine
         utils::append_to_file("00_Report/timeline.tex",buffer.str());
 
         // create job subdirectory.
-        fs::create_directory(job_subdir);
+        fs::create_directory("05_Production/");
 
         //identify current bead
         int startbead = 0;
-        for (fs::path p : fs::directory_iterator(job_subdir))
+        for (fs::path p : fs::directory_iterator("05_Production/"))
         {
             if (p.extension() == ".mdcrd")
             {
@@ -85,7 +66,7 @@ namespace ambermachine
             std::stringstream lead_zero_number;
             lead_zero_number.str("");
             lead_zero_number << std::setw(4) << std::setfill('0') << startbead;
-            std::string restart_file = job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".rst7";
+            std::string restart_file = "05_Production/prod." + lead_zero_number.str() + ".rst7";
             fs::copy(restart_file,"current_step.rst7",fs::copy_options::update_existing);
         }
         
@@ -94,6 +75,9 @@ namespace ambermachine
         fs::copy("current_step.rst7","/tmp/last_step.rst7");
 
         // Loop over all hot steps
+        std::string csv_file = std::getenv("SLURM_SUBMIT_DIR");
+        csv_file += "/06_Analysis/Production.csv";
+        std::string filebasename = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/05_Production/prod.";
         for (int i=startbead; i < settings.NUM_PROD_STEPS; i++)
         {
             // change directory to /tmp
@@ -110,24 +94,14 @@ namespace ambermachine
             std::stringstream lead_zero_number;
             lead_zero_number.str("");
             lead_zero_number << std::setw(4) << std::setfill('0') << i+1;
-            std::string mdin_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/mdin.prod";
-            std::string mdout_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".out";
-            std::string restart_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".rst7";
-            std::string trajectory_file = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/" + job_subdir + "/" + file_prefix + "." + lead_zero_number.str() + ".mdcrd";
+            std::string mdin_file = filebasename + "in";
+            std::string mdout_file = filebasename + lead_zero_number.str() + ".out";
+            std::string restart_file = filebasename + lead_zero_number.str() + ".rst7";
+            std::string trajectory_file = filebasename + lead_zero_number.str() + ".mdcrd";
 
             // load amber module, then run Amber (pmemd.cuda)
             std::cout << "DEBUG: In Production Function, slurm_amber_module is:  " << slurm.SLURM_amber_module << std::endl;
-            buffer.str("");
-            buffer << "module load " << slurm.SLURM_amber_module << "; $AMBERHOME/bin/pmemd.cuda -O";
-            buffer << " -i mdin.in";
-            buffer << " -o mdout.out";
-            buffer << " -p job.prmtop";
-            buffer << " -c last_step.rst7";
-            buffer << " -r current_step.rst7";
-            buffer << " -x trajectory.mdcrd";
-            buffer << " -ref last_step.rst7";
-            utils::silent_shell(buffer.str().c_str());
-
+            AmberLoop(slurm);
             // Error Check the output, terminate job if a step fails.
             std::ifstream outfile("mdout.out");
             std::string line;
@@ -137,33 +111,12 @@ namespace ambermachine
                 {
                     std::cout << "Job Failed.  Terminating." << std::endl;
                     buffer.str("");
-                    buffer << "scancel "<<slurm.SLURM_JOB_ID;
+                    buffer << "scancel " << slurm.SLURM_JOB_ID;
                     utils::silent_shell(buffer.str().c_str());
                     return;
                 }
             }
-
-            // copy back from /tmp
-            fs::copy("mdin.in",mdin_file,fs::copy_options::update_existing);
-            fs::remove("mdin.in");
-
-            fs::copy("current_step.rst7",restart_file);
-            fs::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",fs::copy_options::update_existing);
-            
-            fs::copy("current_step.rst7","last_step.rst7",fs::copy_options::update_existing);
-            fs::remove("current_step.rst7");
-
-            fs::copy("mdout.out",mdout_file);
-            fs::remove("mdout.out");
-            
-            fs::copy("trajectory.mdcrd",trajectory_file);
-            fs::remove("trajectory.mdcrd");
-            
-            // Parse mdout into Production.csv
-            std::string csv_file = std::getenv("SLURM_SUBMIT_DIR");
-            csv_file += "/06_Analysis/Production.csv";
-
-            utils::mdout_to_csv(mdout_file,csv_file);
+            AmberCopyBack(mdin_file,restart_file,mdout_file,trajectory_file,csv_file);
 
             // Check if MMPBSA job, spawn if necessary.
             if (settings.RUN_MMPBSA)
@@ -187,7 +140,7 @@ namespace ambermachine
 
         // Error Checking after finishing loop
         startbead = 0;
-        for (fs::path p : fs::directory_iterator(job_subdir))
+        for (fs::path p : fs::directory_iterator("05_Production/"))
         {
             if (p.extension() == ".mdcrd")
             {
@@ -245,7 +198,17 @@ namespace ambermachine
         utils::append_to_file("00_Report/production.tex",report_update);
         }
 
-        // Complete hot equilibration job stage
+        // Move restarts into RESTARTS folder
+        buffer.str("");
+        buffer << "mkdir 05_Production/RESTARTS/; mv 05_Production/*.rst7 05_Production/RESTARTS/";
+        utils::silent_shell(buffer.str().c_str());
+
+        // Move outs into OUTPUTS folder
+        buffer.str("");
+        buffer << "mkdir 05_Production/OUTPUTS/; mv 05_Production/*.out 05_Production/OUTPUTS/";
+        utils::silent_shell(buffer.str().c_str());
+
+        // Complete Production job stage
         slurm::update_job_name("Completing_Production");
         // Compile Current Report
         latex::compile_report(settings);

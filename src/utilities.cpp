@@ -425,4 +425,11 @@ namespace utils
         }
         return incoming.substr(first + 1, last - first - 1);
     }
+    void compress_and_delete(std::string directory)
+    {
+        std::stringstream buffer;
+        buffer.str("");
+        buffer << "tar -czvf " << directory << ".tar.gz "<< directory << "/ && rm -r " << directory << "/";
+        silent_shell(buffer.str().c_str());
+    }
 }
