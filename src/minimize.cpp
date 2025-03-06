@@ -88,6 +88,9 @@ namespace ambermachine
             fs::remove("mdinfo");
         }
 
+        buffer.str("");
+        // Compress 01_Minimization/ to 01_Minimization.tar.gz, then remove the folder
+        utils::compress_and_delete(job_subdir);
         // Complete minimization job stage
         slurm::update_job_name("Completing_Minimization");
         // Compile Current Report
@@ -97,7 +100,7 @@ namespace ambermachine
         // Submit the next stage of the job: submit_cold_equil_job()
         slurm::submit_cold_equil_job(settings,slurm);
         // Cleanup
-       slurm::cleanup_out_err(slurm);
+        slurm::cleanup_out_err(slurm);
         return;
     }
 }
