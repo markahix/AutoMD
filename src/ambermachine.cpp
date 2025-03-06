@@ -232,4 +232,59 @@ slurm_amber_module Amber/20-cuda-11
         std::cout << "If you wish to extend the simulation, edit the amberinput.in accordingly and delete the hidden file <.AMBER_PRODUCTION_COMPLETE>" << std::endl;
         return;
     }
+
+void AmberLoop(SlurmSettings slurm)
+{
+    std::string curr_path = fs::current_path();
+    fs::current_path("/tmp/");
+
+    std::stringstream buffer;
+    buffer.str("");
+    buffer << "module load " << slurm.SLURM_amber_module << "; $AMBERHOME/bin/pmemd.cuda -O";
+    buffer << " -i mdin.in";
+    buffer << " -o mdout.out";
+    buffer << " -p job.prmtop";
+    buffer << " -c last_step.rst7";
+    buffer << " -r current_step.rst7";
+    buffer << " -x trajectory.mdcrd";
+    buffer << " -ref last_step.rst7";
+    utils::silent_shell(buffer.str().c_str());
+
+    // // copy back from /tmp
+    // fs::copy("mdin.in",mdin_file);
+    // fs::remove("mdin.in");
+    // fs::copy("current_step.rst7",restart_file);
+    // fs::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",fs::copy_options::update_existing);
+    // fs::copy("current_step.rst7","last_step.rst7",fs::copy_options::update_existing);
+    // fs::remove("current_step.rst7");
+    // fs::copy("mdout.out",mdout_file);
+    // fs::remove("mdout.out");
+    // fs::copy("trajectory.mdcrd",trajectory_file);
+    // fs::remove("trajectory.mdcrd");
+
+    // // Parse mdout into HotEquil.csv
+    // utils::mdout_to_csv(mdout_file,csv_file);
+    fs::current_path(curr_path);
+}
+void AmberCopyBack(std::string mdin_file,std::string restart_file, std::string mdout_file, std::string trajectory_file, std::string csv_file)
+{
+    std::string curr_path = fs::current_path();
+    fs::current_path("/tmp/");
+    // copy back from /tmp
+    fs::copy("mdin.in",mdin_file,fs::copy_options::update_existing);
+    fs::remove("mdin.in");
+    fs::copy("current_step.rst7",restart_file);
+    fs::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",fs::copy_options::update_existing);
+    fs::copy("current_step.rst7","last_step.rst7",fs::copy_options::update_existing);
+    fs::remove("current_step.rst7");
+    fs::copy("mdout.out",mdout_file);
+    fs::remove("mdout.out");
+    fs::copy("trajectory.mdcrd",trajectory_file);
+    fs::remove("trajectory.mdcrd");
+
+    // Parse mdout into HotEquil.csv
+    utils::mdout_to_csv(mdout_file,csv_file);
+    fs::current_path(curr_path);
+
+}
 }

@@ -13,7 +13,6 @@ void prepare_clustering(JobSettings settings)
     // append command to cpptraj.in
     // append plot to analyse.py
     // append results to report latex.
-
 }
 
 void parse_hbonds_avg(JobSettings settings)

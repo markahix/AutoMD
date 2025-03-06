@@ -40,6 +40,7 @@ namespace utils
     void mdout_to_csv(std::string filename,std::string csv_file);
     int count_lines_in_file(std::string filename);
     std::string string_between(std::string incoming, std::string first_delim, std::string second_delim);
+    void compress_and_delete(std::string directory);
 }
 
 

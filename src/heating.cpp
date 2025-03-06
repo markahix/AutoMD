@@ -182,6 +182,8 @@ namespace ambermachine
         utils::append_to_file("00_Report/heating.tex",report_update);
         }
 
+        // Compress 03_Heating/ to 03_Heating.tar.gz, then remove the folder
+        utils::compress_and_delete(job_subdir);
         // Complete minimization job stage
         slurm::update_job_name("Completing_Iterative_Heating");
         // Compile Current Report
