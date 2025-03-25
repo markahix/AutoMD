@@ -179,7 +179,7 @@ bool mask_checks(JobSettings settings)
     return false;
 }
 
-bool generate_mmpbsa_inputs(JobSettings settings)
+bool generate_mmpbsa_inputs(JobSettings settings, SlurmSettings slurm)
 {
     slurm::update_job_name("Generating_MMPBSA_Inputs");
     // make MMPBSA_Inputs folder
@@ -192,7 +192,10 @@ bool generate_mmpbsa_inputs(JobSettings settings)
     buffer << "strip !" << settings.COMPLEX_MASK << std::endl;
     buffer << "outparm MMPBSA_Inputs/complex.prmtop" << std::endl << "quit" << std::endl;
     utils::write_to_file("parmed.in",buffer.str());
-    utils::silent_shell("parmed -i parmed.in > /dev/null; rm parmed.in");
+    buffer.str("");
+    // buffer << "module load " << slurm.SLURM_amber_module << "; ";
+    buffer << "module load amber/20; parmed -i parmed.in > complex_parmed.log && rm parmed.in";
+    utils::silent_shell(buffer.str().c_str());
 
     // Generate receptor.prmtop
     buffer.str("");
@@ -200,7 +203,10 @@ bool generate_mmpbsa_inputs(JobSettings settings)
     buffer << "strip !" << settings.RECEPTOR_MASK << std::endl;
     buffer << "outparm MMPBSA_Inputs/receptor.prmtop" << std::endl << "quit" << std::endl;
     utils::write_to_file("parmed.in",buffer.str());
-    utils::silent_shell("parmed -i parmed.in > /dev/null; rm parmed.in");
+    buffer.str("");
+    // buffer << "module load " << slurm.SLURM_amber_module << "; ";
+    buffer << "module load amber/20; parmed -i parmed.in > receptor_parmed.log && rm parmed.in";
+    utils::silent_shell(buffer.str().c_str());
 
     // Generate ligand.prmtop
     buffer.str("");
@@ -208,7 +214,10 @@ bool generate_mmpbsa_inputs(JobSettings settings)
     buffer << "strip !" << settings.LIGAND_MASK << std::endl;
     buffer << "outparm MMPBSA_Inputs/ligand.prmtop" << std::endl << "quit" << std::endl;
     utils::write_to_file("parmed.in",buffer.str());
-    utils::silent_shell("parmed -i parmed.in > /dev/null; rm parmed.in");
+    buffer.str("");
+    // buffer << "module load " << slurm.SLURM_amber_module << "; ";
+    buffer << "module load amber/20; parmed -i parmed.in > ligand_parmed.log && rm parmed.in";
+    utils::silent_shell(buffer.str().c_str());
 
     // Generate mmpbsa.in
     buffer.str("");
@@ -244,6 +253,7 @@ bool generate_mmpbsa_inputs(JobSettings settings)
         std::cout << "Error:  Ligand + Receptor does not equal Complex!" << std::endl;
         return true;
     }
+    utils::silent_shell("rm *parmed.log");
     return false;
 }
 
@@ -284,7 +294,7 @@ namespace ambermachine
         {
             slurm::update_job_name("Generating_MMPBSA_Input_Files");
 
-            if (generate_mmpbsa_inputs(settings))
+            if (generate_mmpbsa_inputs(settings,slurm))
             {
                 //If this evaluates to true, it means there was a failure in the MMPBSA file generation and the job has been killed.
                 return;

@@ -117,7 +117,7 @@ namespace ambermachine
                 }
             }
             AmberCopyBack(mdin_file,restart_file,mdout_file,trajectory_file,csv_file);
-
+            fs::current_path(std::getenv("SLURM_SUBMIT_DIR"));
             // Check if MMPBSA job, spawn if necessary.
             if (settings.RUN_MMPBSA)
             {
@@ -131,8 +131,6 @@ namespace ambermachine
             }
         }
         
-        // return to original directory when finished in /tmp
-        fs::current_path(std::getenv("SLURM_SUBMIT_DIR"));
         if (utils::CheckFileExists("mdinfo"))
         {
             fs::remove("mdinfo");

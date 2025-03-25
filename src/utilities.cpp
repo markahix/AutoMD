@@ -1,19 +1,4 @@
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <experimental/filesystem>
-#include <sstream>
-#include <cmath>
-#include <algorithm>
-#include <cctype>
-#include <locale>
-#include <vector>
-#include <cstdio>
-#include <memory>
-#include <stdexcept>
-#include <array>
-#include <iomanip>
+
 #include "utilities.h"
 #include "classes.h"
 #include "slurm.h"
@@ -425,11 +410,33 @@ namespace utils
         }
         return incoming.substr(first + 1, last - first - 1);
     }
+    
     void compress_and_delete(std::string directory)
     {
         std::stringstream buffer;
         buffer.str("");
         buffer << "tar -czvf " << directory << ".tar.gz "<< directory << "/ && rm -r " << directory << "/";
         silent_shell(buffer.str().c_str());
+    }
+
+    std::vector<std::string> sort_files_by_timestamp(std::string directory,std::string pattern)
+    {
+        std::set <fs::path> sort_by_name;
+        for (fs::path p : fs::directory_iterator(directory))
+        {
+            if (p.extension() == pattern) 
+            {
+                sort_by_name.insert(p);
+            }    
+        }
+        std::vector<std::string> file_list={};
+
+        for (auto p : sort_by_name)
+        {
+            std::cout << p << std::endl;
+            file_list.push_back(p);
+        }
+        
+        return file_list;
     }
 }

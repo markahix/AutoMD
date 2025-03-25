@@ -192,7 +192,7 @@ void vmd::exit()
 
 void vmd::run_vmd()
 {
-    std::string command="module load vmd/1.9.3; vmd -e ambermachine.vmd >> vmd.log";
+    std::string command="module load vmd/1.9.3; vmd -dispdev text < ambermachine.vmd > vmd.log";
     utils::silent_shell(command.c_str());
 }
 

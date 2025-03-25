@@ -1,4 +1,5 @@
 #include "cpptraj.h"
+#include <set>
 
 // Prepare input with parm, trajin, autoimage, and reference.
 // check against JobSettings for what specific tasks can be done.
@@ -10,12 +11,10 @@ void PrepareCPPTRAJInput(JobSettings settings)
 
     // Load trajectory, autoimage, strip solvent
     cpptraj << "parm " << settings.PRMTOP << std::endl;
-    for (fs::path p : fs::directory_iterator("05_Production/"))
+    std::vector<std::string> traj_file_list = utils::sort_files_by_timestamp("05_Production/",".mdcrd");
+    for (int i=0; i < traj_file_list.size(); i++)
     {
-        if (p.extension() == ".mdcrd")
-        {
-        cpptraj << "trajin " << p << std::endl;
-        }
+        cpptraj << "trajin " << traj_file_list[i] << std::endl;
     }
     cpptraj << "reference " << settings.INPCRD << std::endl;
     cpptraj << "autoimage" << std::endl;
@@ -73,12 +72,10 @@ namespace cpptraj
         std::stringstream cpptraj;
         cpptraj.str("");
         cpptraj << "parm " << settings.PRMTOP << std::endl;
-        for (fs::path p : fs::directory_iterator("05_Production/"))
+        std::vector<std::string> traj_file_list = utils::sort_files_by_timestamp("05_Production/",".mdcrd");
+        for (int i=0; i < traj_file_list.size(); i++)
         {
-            if (p.extension() == ".mdcrd")
-            {
-            cpptraj << "trajin " << p << std::endl;
-            }
+            cpptraj << "trajin " << traj_file_list[i] << std::endl;
         }
         cpptraj << "reference " << settings.INPCRD << std::endl;
         cpptraj << "autoimage" << std::endl;

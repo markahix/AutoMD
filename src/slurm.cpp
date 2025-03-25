@@ -150,7 +150,9 @@ namespace slurm
         std::stringstream buffer;
         buffer.str("");
         buffer << dummy << std::endl;
-        utils::append_to_file(".JOBDEPENDENCIES",buffer.str());
+        std::string job_dep_file = std::getenv("SLURM_SUBMIT_DIR");
+        job_dep_file += "/.JOBDEPENDENCIES";
+        utils::append_to_file(job_dep_file,buffer.str());
 
     }
 
@@ -171,7 +173,9 @@ namespace slurm
         std::stringstream buffer;
         buffer.str("");
         buffer << dummy << std::endl;
-        utils::append_to_file(".JOBDEPENDENCIES",buffer.str());
+        std::string job_dep_file = std::getenv("SLURM_SUBMIT_DIR");
+        job_dep_file += "/.JOBDEPENDENCIES";
+        utils::append_to_file(job_dep_file,buffer.str());
     }
 
     void submit_analysis_job(JobSettings settings,SlurmSettings slurm)

@@ -20,6 +20,7 @@
 #include <ctime>
 #include <set>
 
+
 namespace fs = std::experimental::filesystem;
 
 namespace utils
@@ -41,6 +42,7 @@ namespace utils
     int count_lines_in_file(std::string filename);
     std::string string_between(std::string incoming, std::string first_delim, std::string second_delim);
     void compress_and_delete(std::string directory);
+    std::vector<std::string> sort_files_by_timestamp(std::string directory,std::string pattern);
 }
 
 
