@@ -426,6 +426,10 @@ namespace ambermachine
                 latex::figure_block_to_file("SASA",caption.str(),"00_Report/analysis_SASA.tex");
                 latex::python_block_to_file(python::plot_sasa(), "00_Report/analysis_SASA.tex");
             }
+            //Ramachandran Data
+            utils::append_to_file("cpptraj.in",cpptraj::multidihedral(settings));
+            
+
         }
 
         if (settings.NORMAL_MODES_MASK != " ") // Handle Normal Modes

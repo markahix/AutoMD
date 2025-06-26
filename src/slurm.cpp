@@ -185,7 +185,7 @@ namespace slurm
         sys_command.str("");
         sys_command << "sbatch -J AmberMachineAnalysis -p " << slurm.SLURM_partition;
         sys_command << " -q "<< slurm.SLURM_queue;
-        sys_command << " -t 24:00:00 -N 1 -n 1";
+        sys_command << " -t 5-0:00:00 -N 1 -n 1";
         sys_command << " --gres=" << slurm.SLURM_gpu;
         if (slurm.SLURM_nodelist != " ")
             sys_command << " --nodelist=" << slurm.SLURM_nodelist;

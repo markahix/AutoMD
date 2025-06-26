@@ -13,6 +13,7 @@ namespace cpptraj
     std::string ligand_interaction_energy(JobSettings settings);
     std::string hbonds(JobSettings settings);
     std::string normal_modes(JobSettings settings);
+    std::string multidihedral(JobSettings settings);
 }
 
 #endif

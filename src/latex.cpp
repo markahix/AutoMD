@@ -19,11 +19,11 @@ void latex::write_main_tex()
     buffer << "\\usepackage[margin=0.5in]{geometry}" << std::endl;
     buffer << "\\usepackage{graphicx}" << std::endl;
     buffer << "\\usepackage[T1]{fontenc}" << std::endl;
-    buffer << "\\usepackage{minted}" << std::endl;
-    buffer << "\\usepackage{tcolorbox}" << std::endl;
-    buffer << "\\usepackage{etoolboox}" << std::endl;
-    buffer << "\\usepackage{placeins}" << std::endl;
-    buffer << "\\usepackage{longtable}" << std::endl;
+    // buffer << "\\usepackage{minted}" << std::endl;
+    // buffer << "\\usepackage{tcolorbox}" << std::endl;
+    // buffer << "\\usepackage{etoolbox}" << std::endl;
+    // buffer << "\\usepackage{placeins}" << std::endl;
+    // buffer << "\\usepackage{longtable}" << std::endl;
     buffer << "\\title{Automatic Amber Molecular Dynamics Report}" << std::endl;
     buffer << "\\author{User: \\textbf{" << username <<"} \\\\ Wayne State University Grid}" << std::endl;
     buffer << "\\date{\\today}" << std::endl;

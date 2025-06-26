@@ -130,4 +130,11 @@ namespace cpptraj
         cpptraj << "diagmatrix nma_covar out 06_Analysis/nma_covar.mat vecs 100 reduce nmwiz nmwizvecs 100 nmwizfile 06_Analysis/nma_first_100_modes.nmd nmwizmask " << settings.NORMAL_MODES_MASK << std::endl;
         return cpptraj.str();
     }
+    
+    std::string multidihedral(JobSettings settings){
+        std::stringstream cpptraj;
+        cpptraj.str("");//
+        cpptraj << "multidihedral Ramachandran phi psi resrange " << settings.RECEPTOR_MASK.substr(1,settings.LIGAND_MASK.size()) << " out 06_Analysis/RamachandranData.csv" << std::endl;
+        return cpptraj.str();
+    }
 }

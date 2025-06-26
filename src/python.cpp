@@ -61,7 +61,7 @@ ax.tick_params(axis="both", labelsize=tick_fontsize)
 ax.set_xlim(xmin,xmax)
 ax.set_xlabel("Time (ns)",fontsize=x_label_fontsize)
 fig.subplots_adjust(hspace=0.0)
-fig.savefig("00_Report/"+input_csv.replace(".csv","_Figure_01.png"),dpi=300,facecolor="white")
+fig.savefig("00_Report/"+input_csv.split("/")[-1].replace(".csv","_Figure_01.png"),dpi=300,facecolor="white")
 fig = plt.figure(figsize=(8,6),dpi=300)
 y_data     = df["Etot"]
 y_label    = "Total Energy \n"+r"($kcal\cdot mol^{-1}$)"
@@ -95,7 +95,7 @@ ax.set_xlim(xmin,xmax)
 ax.set_xlim(xmin,xmax)
 ax.set_xlabel("Time (ns)",fontsize=x_label_fontsize)
 fig.subplots_adjust(hspace=0.0)
-fig.savefig("00_Report/"+input_csv.replace(".csv","_Figure_02.png"),dpi=300,facecolor="white")
+fig.savefig("00_Report/"+input_csv.split("/")[-1].replace(".csv","_Figure_02.png"),dpi=300,facecolor="white")
 fig = plt.figure(figsize=(8,10),dpi=300)
 y_data     = df["EKtot"]
 y_label    = "Bond Energy \n"+r"($kcal\cdot mol^{-1}$)"
@@ -148,7 +148,7 @@ ax.tick_params(axis="both", labelsize=tick_fontsize)
 ax.set_xlim(xmin,xmax)
 ax.set_xlabel("Time (ns)",fontsize=x_label_fontsize)
 fig.subplots_adjust(hspace=0.0)
-fig.savefig("00_Report/"+input_csv.replace(".csv","_Figure_03.png"),dpi=300,facecolor="white")
+fig.savefig("00_Report/"+input_csv.split("/")[-1].replace(".csv","_Figure_03.png"),dpi=300,facecolor="white")
 )PLOTCSVDATA";
     utils::write_to_file("plotcsvdata.py",pyscript);
     std::stringstream buffer;
