@@ -16,6 +16,7 @@ namespace slurm
     void submit_sasa_job(JobSettings settings, SlurmSettings slurm, std::string trajectory);
     void submit_analysis_job(JobSettings settings,SlurmSettings slurm);
     void submit_reporting_job(JobSettings settings,SlurmSettings slurm);
+    void delete_if_exists(std::string filename);
     void cleanup_out_err(SlurmSettings slurm);
     void remove_dependency_from_list(SlurmSettings slurm);
 }

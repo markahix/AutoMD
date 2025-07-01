@@ -48,13 +48,12 @@ namespace ambermachine
         buffer.str("");
         buffer << prodstep << ", " << delta_avg << ", " << delta_std << std::endl;
 
-
         slurm::remove_dependency_from_list(slurm);
         // remove MMPBSA_*.*
         buffer.str("");
         buffer << "rm " << std::getenv("SLURM_SUBMIT_DIR") << "/MMPBSA_*"<< slurm.SLURM_JOB_ID << ".out " << std::getenv("SLURM_SUBMIT_DIR") << "/MMPBSA_*" << slurm.SLURM_JOB_ID << ".err";
         utils::silent_shell(buffer.str().c_str());
-
+        slurm::cleanup_out_err(slurm);
         return;
     }
 }

@@ -213,13 +213,41 @@ namespace slurm
         utils::silent_shell(sys_command.str().c_str());
 
     }
+    void delete_if_exists(std::string filename)
+    {
+        if (fs::exists(filename))
+        {
+            fs::remove(fs::path::absolute(filename));
+        }
+    }
+
     void cleanup_out_err(SlurmSettings slurm)
     {
-        //remove empty AMBER_*.out and *.err files.
+        
         std::stringstream buffer;
-        buffer.str("");
-        buffer << "rm " << std::getenv("SLURM_SUBMIT_DIR") << "/AMBER_*"<< slurm.SLURM_JOB_ID << ".out " << std::getenv("SLURM_SUBMIT_DIR") << "/AMBER_*" << slurm.SLURM_JOB_ID << ".err";
-        utils::silent_shell(buffer.str().c_str());
+        std::stringstream filename;
+        //remove empty AMBER_*.out and *.err files.
+        
+        filename.str("");
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/AMBER_*"<< slurm.SLURM_JOB_ID << ".out";
+        delete_if_exists(filename.str());
+        filename.str("");
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/AMBER_*"<< slurm.SLURM_JOB_ID << ".err";
+        delete_if_exists(filename.str());
+
+        filename.str("");
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/MMPBSA_*"<< slurm.SLURM_JOB_ID << ".out";
+        delete_if_exists(filename.str());
+        filename.str("");
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/MMPBSA_*"<< slurm.SLURM_JOB_ID << ".err";
+        delete_if_exists(filename.str());
+
+        filename.str("");
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/SASA_*"<< slurm.SLURM_JOB_ID << ".out";
+        delete_if_exists(filename.str());
+        filename.str("");
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/SASA_*"<< slurm.SLURM_JOB_ID << ".err";
+        delete_if_exists(filename.str());
     }
 
     void remove_dependency_from_list(SlurmSettings slurm)
