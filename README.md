@@ -1,4 +1,4 @@
-# AmberMachine
+# AutoMD
 
 This codebase is currently built to work on Wayne State University's Grid HPC.  
 It is recommended that anyone wishing to use this code be sure to edit the defaults to align with their own HPC environment to streamline end-user friendliness.
@@ -27,3 +27,7 @@ So I wrote a program to automate and streamline as much of the process as I coul
 7. **Analysis** - Analysis of completed production MD.  Base analyses include RMSD, RMSF, correlation, hydrogen bond analysis, and normal mode/principal component analysis.  The input file can include additional `cpptraj` commands which will be performed after the base analyses.
 8. **Report** - The report is updated at each stage of the workflow, so this stage primarily ensures that everything is properly compiled and the PDF made available to the end user.
 
+
+### AGIMUS Integration
+
+When installed as part of the AGIMUS suite, AutoMD can call nearly every other module directly.
