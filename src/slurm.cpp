@@ -137,11 +137,11 @@ namespace slurm
     {
         std::stringstream sys_command;
         sys_command.str("");
-        sys_command << "sbatch -J AmberMachineMMPBSA";
+        sys_command << "sbatch -J AutoMMPBSA";
         sys_command << " -q primary";
-        sys_command << " -t 5-0:00:00 -N 1 -n 1";
-        sys_command << " --mem=5GB";
-        sys_command << " -o MMPBSA_%j.out -e MMPBSA_%j.err --wrap \"" << slurm.SLURM_executable << " --mmpbsa " << trajectory << "\"";
+        sys_command << " -t 5-0:00:00 -N 1 -n 20";
+        sys_command << " --mem=20GB";
+        sys_command << " -o MMPBSA_%j.out -e MMPBSA_%j.err --wrap \"autommpbsa -s" << settings.PRMTOP << " -c MMPBSA_Inputs/complex.prmtop -r MMPBSA_Inputs/receptor.prmtop -l MMPBSA_Inputs/ligand.prmtop -m MMPBSA_Inputs/mmpbsa.in -t " << trajectory << "\"";
         std::string jobid = utils::GetSysResponse(sys_command.str().c_str());
         std::stringstream line;
         line.str(jobid);
@@ -153,7 +153,6 @@ namespace slurm
         std::string job_dep_file = std::getenv("SLURM_SUBMIT_DIR");
         job_dep_file += "/.JOBDEPENDENCIES";
         utils::append_to_file(job_dep_file,buffer.str());
-
     }
 
     void submit_sasa_job(JobSettings settings, SlurmSettings slurm, std::string trajectory)
@@ -215,9 +214,9 @@ namespace slurm
     }
     void delete_if_exists(std::string filename)
     {
-        if (fs::exists(filename))
+        if (fs::exists(fs::absolute(filename)))
         {
-            fs::remove(fs::path::absolute(filename));
+            fs::remove(fs::absolute(filename));
         }
     }
 

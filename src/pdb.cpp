@@ -136,6 +136,26 @@ PDB::~PDB()
 
 }
 
+
+PDBMolecule::PDBMolecule(int number)
+{
+    molecule_number = number;
+    residues = {};
+}
+
+PDBMolecule::~PDBMolecule()
+{
+
+}
+
+void PDBMolecule::AddResidue(int id, std::string name, std::string chain)
+{
+    PDBResidue residue(id, name, chain);
+    residues.push_back(residue);
+}
+
+
+
 void PDB::ReadPDB()
 {
     std::string line;
