@@ -23,6 +23,10 @@
 
 namespace fs = std::experimental::filesystem;
 
+
+void error_log(std::string message,int exit_code);
+void normal_log(std::string message);
+
 namespace utils
 {
     void splash_screen();

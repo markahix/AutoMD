@@ -15,7 +15,6 @@ class SlurmSettings
         std::string SLURM_exclude_nodes;
         std::string SLURM_amber_module;
         std::string SLURM_executable;
-
         SlurmSettings();
         ~SlurmSettings();
 };
@@ -56,4 +55,14 @@ class JobSettings
         ~JobSettings();
 };
 
+class FileList
+{
+    private:
+        std::map<std::string, std::string> files;
+    public:
+        FileList();
+        ~FileList();
+        void AddFile(std::string key, std::string filename);
+        std::string GetFile(std::string key);
+};
 #endif

@@ -61,3 +61,22 @@ JobSettings::~JobSettings()
 {
     
 }
+
+FileList::FileList()
+{
+    files = {};
+}
+FileList::~FileList()
+{
+    
+}
+
+void FileList::AddFile(std::string key, std::string filename)
+{
+    files[key] = fs::absolute(filename);
+}
+
+std::string FileList::GetFile(std::string key)
+{
+    return files[key];
+}

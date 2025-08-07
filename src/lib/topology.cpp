@@ -53,10 +53,10 @@ void Topology::ReadTopology()
     // Parse each section appropriately. ATOM_NAME, RESIDUE_LABEL, RESIDUE_POINTER, ATOMS_PER_MOLECULE, etc.
     
     // Parse "ATOM_NAME" section
-    for (int i=0; i < sections["ATOM_NAME"].size(); i++)
+    for (unsigned int i=0; i < sections["ATOM_NAME"].size(); i++)
     {
         std::string line = sections["ATOM_NAME"][i];
-        for (int j=0; j < line.size(); j+=4)
+        for (unsigned int j=0; j < line.size(); j+=4)
         {
             std::string a_name;
             a_name = line.substr(j,4);
@@ -71,7 +71,7 @@ void Topology::ReadTopology()
     std::cout << "Total number of atoms identified in given PRMTOP: " << atom_names.size() << std::endl;
 
     // Parse "ATOM_NAME" section
-    for (int i=0; i < sections["ATOM_NAME"].size(); i++)
+    for (unsigned int i=0; i < sections["ATOM_NAME"].size(); i++)
     {
         std::stringstream buffer;
         std::string a_name;

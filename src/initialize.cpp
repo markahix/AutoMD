@@ -1,23 +1,48 @@
 #include "ambermachine.h"
+#include "initialize.h"
 
-int get_replicate_count(std::string path)
+void filechecks(JobSettings settings)
 {
-    int r = 1;
-    for(const fs::directory_entry& entry : fs::directory_iterator{path})
+    slurm::update_job_name("Validating_Input_Files");
+    // true if a failure occurs, error-exit if true.
+    bool EPICFAIL = false;
+    std::stringstream failure_log;
+    failure_log.str("");
+    if (!fs::exists(settings.PRMTOP))
     {
-        if (fs::is_directory(entry.path()))
+        EPICFAIL = true;
+        failure_log << "Unable to find file: " << settings.PRMTOP << std::endl;
+    }
+    if (!fs::exists(settings.INPCRD))
+    {
+        EPICFAIL = true;
+        failure_log << "Unable to find file: " << settings.INPCRD << std::endl;
+    }
+    if (settings.RUN_MMPBSA)
+    {
+        if (settings.RECEPTOR_MASK == "")
         {
-            std::string junk = entry.path().c_str();
-            if (junk.find("Replicate_") != std::string::npos)
-            {
-                r++;
-            }
+            EPICFAIL = true;
+            failure_log << "Keyword 'receptor_mask' cannot be empty if running MMPBSA." << std::endl;
+        }
+        if (settings.COMPLEX_MASK == "")
+        {
+            EPICFAIL = true;
+            failure_log << "Keyword 'complex_mask' cannot be empty if running MMPBSA." << std::endl;
+        }
+        if (settings.LIGAND_MASK == "")
+        {
+            EPICFAIL = true;
+            failure_log << "Keyword 'ligand_mask' cannot be empty if running MMPBSA." << std::endl;
         }
     }
-    return r;
+    if (EPICFAIL)
+    {
+        error_log(failure_log.str(),1);
+    }
 }
 
-int cpptraj_mask_check(std::string prmtop, std::string inpcrd, std::string mask)
+bool cpptraj_mask_check(std::string prmtop, std::string inpcrd, std::string mask)
 {
     if (mask == "")
     {
@@ -71,50 +96,9 @@ int cpptraj_mask_check(std::string prmtop, std::string inpcrd, std::string mask)
     return 0;
 }
 
-bool filechecks(JobSettings settings)
+void mask_checks(JobSettings settings)
 {
-    // return true if a failure occurs.
-    bool EPICFAIL = false;
-    std::stringstream failure_log;
-    failure_log.str("");
-    if (!utils::CheckFileExists(settings.PRMTOP))
-    {
-        EPICFAIL = true;
-        failure_log << "Unable to find file: " << settings.PRMTOP << std::endl;
-    }
-    if (!utils::CheckFileExists(settings.INPCRD))
-    {
-        EPICFAIL = true;
-        failure_log << "Unable to find file: " << settings.INPCRD << std::endl;
-    }
-    if (settings.RUN_MMPBSA)
-    {
-        if (settings.RECEPTOR_MASK == "")
-        {
-            EPICFAIL = true;
-            failure_log << "Keyword 'receptor_mask' cannot be empty if running MMPBSA." << std::endl;
-        }
-        if (settings.COMPLEX_MASK == "")
-        {
-            EPICFAIL = true;
-            failure_log << "Keyword 'complex_mask' cannot be empty if running MMPBSA." << std::endl;
-        }
-        if (settings.LIGAND_MASK == "")
-        {
-            EPICFAIL = true;
-            failure_log << "Keyword 'ligand_mask' cannot be empty if running MMPBSA." << std::endl;
-        }
-    }
-    if (EPICFAIL)
-    {
-        std::cout << failure_log.str() << std::endl;
-        return true;
-    }
-    return false;
-}
-
-bool mask_checks(JobSettings settings)
-{
+    slurm::update_job_name("Validating_Amber_Selection_Masks");
     bool EPICFAIL=false;
     std::stringstream failure_log;
     failure_log.str("");
@@ -173,14 +157,48 @@ bool mask_checks(JobSettings settings)
     }
     if (EPICFAIL)
     {
-        std::cout << failure_log.str() << std::endl;
-        return true;
+        error_log(failure_log.str(),1);
     }
-    return false;
 }
 
-bool generate_mmpbsa_inputs(JobSettings settings, SlurmSettings slurm)
+int get_replicate_count(std::string path)
 {
+    int r = 1;
+    for(const fs::directory_entry& entry : fs::directory_iterator{path})
+    {
+        if (fs::is_directory(entry.path()))
+        {
+            std::string junk = entry.path().c_str();
+            if (junk.find("Replicate_") != std::string::npos)
+            {
+                r++;
+            }
+        }
+    }
+    return r;
+}
+
+void generate_replicate_folder(JobSettings settings)
+{
+        slurm::update_job_name("Generating_Replicate_Folder");
+        std::stringstream buffer;
+        buffer.str("");
+        buffer << "Replicate_" << get_replicate_count("./");
+        fs::create_directory(buffer.str());
+        fs::copy(settings.PRMTOP,buffer.str());
+        fs::copy(settings.INPCRD,buffer.str());
+        fs::copy("amberinput.in",buffer.str());
+        fs::current_path(buffer.str());
+        // make 06_Analysis/ subdirectory
+        fs::create_directory("06_Analysis/");
+}
+
+void generate_mmpbsa_inputs(JobSettings settings, SlurmSettings slurm)
+{
+    if (! settings.RUN_MMPBSA)
+    {
+        return;
+    }
     slurm::update_job_name("Generating_MMPBSA_Inputs");
     // make MMPBSA_Inputs folder
     fs::create_directory("MMPBSA_Inputs/");
@@ -242,80 +260,46 @@ bool generate_mmpbsa_inputs(JobSettings settings, SlurmSettings slurm)
     // check that all files exist
     if (!utils::CheckFileExists("MMPBSA_Inputs/complex.prmtop") || !utils::CheckFileExists("MMPBSA_Inputs/receptor.prmtop") || !utils::CheckFileExists("MMPBSA_Inputs/ligand.prmtop"))
     {
-        std::cout << "ERROR:  failed to generate MMPBSA inputs." << std::endl;
-        return true;
+        error_log("ERROR:  failed to generate MMPBSA inputs.",1);
     }
     int n_com_atoms = stoi(utils::GetSysResponse("grep -A2 \"FLAG POINTERS\" MMPBSA_Inputs/complex.prmtop | tail -n 1 | awk '{print $1}'"));
     int n_rec_atoms = stoi(utils::GetSysResponse("grep -A2 \"FLAG POINTERS\" MMPBSA_Inputs/receptor.prmtop | tail -n 1 | awk '{print $1}'"));
     int n_lig_atoms = stoi(utils::GetSysResponse("grep -A2 \"FLAG POINTERS\" MMPBSA_Inputs/ligand.prmtop | tail -n 1 | awk '{print $1}'"));
     if (n_com_atoms != n_rec_atoms + n_lig_atoms)
     {
-        std::cout << "Error:  Ligand + Receptor does not equal Complex!" << std::endl;
-        return true;
+        error_log("Error:  Ligand + Receptor does not equal Complex!",1);
     }
     utils::silent_shell("rm *parmed.log");
-    return false;
 }
 
-namespace ambermachine
+int main(int argc, char** argv)
 {
-    void initialize(JobSettings settings,SlurmSettings slurm)
-    {
-        slurm::update_job_name("Validating_Input_Files");
-        if (filechecks(settings))
-        {
-            // In here, something was wrong with the input files or the contents therein.
-            return;
-        }
+    JobSettings settings;
+    SlurmSettings slurm;
+    slurm.SLURM_executable = argv[0];
+    ambermachine::read_amberinput(settings,slurm);
 
-        slurm::update_job_name("Validating_Amber_Selection_Masks");
-        if (mask_checks(settings))
-        {
-            // In here, something was wrong about the provided amber selection masks with respect to the prmtop/inpcrd combination.
-            return;
-        }
+    // File Validations
+    filechecks(settings);
 
-        slurm::update_job_name("Generating_Replicate_Folder");
-        // Generate our Replicate folder
-        std::stringstream buffer;
-        buffer.str("");
-        buffer << "Replicate_" <<  get_replicate_count("./");
-        fs::create_directory(buffer.str());
-        fs::copy(settings.PRMTOP,buffer.str());
-        fs::copy(settings.INPCRD,buffer.str());
-        fs::copy("amberinput.in",buffer.str());
-        fs::current_path(buffer.str());
-        // make 06_Analysis/ subdirectory
-        fs::create_directory("06_Analysis/");
+    // Amber Mask Validations
+    mask_checks(settings);
 
+    // Generate Replicate Folder
+    generate_replicate_folder(settings);
 
-        // if MMPBSA, generate MMPBSA inputs.
-        if (settings.RUN_MMPBSA)
-        {
-            slurm::update_job_name("Generating_MMPBSA_Input_Files");
+    // MMPBSA Input Generation (checks inside function)
+    generate_mmpbsa_inputs(settings,slurm);
+    
+    // Generate Reporting Templates
+    slurm::update_job_name("Generating_Report_Templates");
+    latex::initialize_report(settings);
+    
+    // Compile Current Report
+    latex::compile_report(settings);
 
-            if (generate_mmpbsa_inputs(settings,slurm))
-            {
-                //If this evaluates to true, it means there was a failure in the MMPBSA file generation and the job has been killed.
-                return;
-            }
-        }
+    // Create .AMBER_INITIALIZE_COMPLETE
+    utils::write_to_file(".AMBER_INITIALIZE_COMPLETE","");
 
-        // Generate Reporting Templates
-        slurm::update_job_name("Generating_Report_Templates");
-        latex::initialize_report(settings);
-        
-        // Compile Current Report
-        latex::compile_report(settings);
-
-        // Create .AMBER_INITIALIZE_COMPLETE
-        utils::write_to_file(".AMBER_INITIALIZE_COMPLETE","");
-
-        // Submit the next stage of the job: submit_minimize_job()
-        slurm::submit_minimize_job(settings,slurm);
-
-        // Cleanup
-        slurm::cleanup_out_err(slurm);
-    }
-
+    return 0;
 }

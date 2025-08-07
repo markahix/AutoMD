@@ -5,6 +5,17 @@
 
 // namespace fs = std::experimental::filesystem;
 
+void error_log(std::string message,int exit_code)
+{
+    std::cerr << message << std::endl;
+    exit(exit_code);
+}
+
+void normal_log(std::string message)
+{
+    std::cout << message << std::endl;
+}
+
 namespace utils
 {
     void splash_screen()
@@ -106,7 +117,7 @@ namespace utils
 
     int FindFlag(std::vector<std::vector<std::string>>& flags, char* target)
     {
-        for (int i = 1; i<flags.size(); i++)
+        for (unsigned int i = 1; i<flags.size(); i++)
         {
             if (flags[i][0] == target)
                 return i;
@@ -174,7 +185,7 @@ namespace utils
         float time_adjust = 0.0;
     
         // if coldequil.csv doesn't exist, make it.  otherwise, obtain the first value on the last line for time_adjust.
-        if (!utils::CheckFileExists(csv_file))
+        if (!fs::exists(csv_file))
         {
             buffer.str("");
             buffer << "TIME(PS),TEMP(K),PRESS,Etot,EKtot,EPtot,BOND,ANGLE,DIHED,1-4 NB,1-4 EEL,VDWAALS,EELEC,EHBOND,RESTRAINT,EKCMT,VIRIAL,VOLUME,Density";
@@ -403,12 +414,14 @@ namespace utils
         {
             return incoming;
         }
+        incoming = incoming.substr(first+1,incoming.size() - first -1);
+
         unsigned last = incoming.find(second_delim);
         if (last == std::string::npos)
         {
-            return incoming.substr(first + 1, incoming.size());
+            return incoming.substr(0, incoming.size());
         }
-        return incoming.substr(first + 1, last - first - 1);
+        return incoming.substr(0, last);
     }
     
     void compress_and_delete(std::string directory)

@@ -12,7 +12,7 @@ void PrepareCPPTRAJInput(JobSettings settings)
     // Load trajectory, autoimage, strip solvent
     cpptraj << "parm " << settings.PRMTOP << std::endl;
     std::vector<std::string> traj_file_list = utils::sort_files_by_timestamp("05_Production/",".mdcrd");
-    for (int i=0; i < traj_file_list.size(); i++)
+    for (unsigned int i=0; i < traj_file_list.size(); i++)
     {
         cpptraj << "trajin " << traj_file_list[i] << std::endl;
     }
@@ -73,7 +73,7 @@ namespace cpptraj
         cpptraj.str("");
         cpptraj << "parm " << settings.PRMTOP << std::endl;
         std::vector<std::string> traj_file_list = utils::sort_files_by_timestamp("05_Production/",".mdcrd");
-        for (int i=0; i < traj_file_list.size(); i++)
+        for (unsigned int i=0; i < traj_file_list.size(); i++)
         {
             cpptraj << "trajin " << traj_file_list[i] << std::endl;
         }

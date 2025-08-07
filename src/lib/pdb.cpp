@@ -74,7 +74,7 @@ void PDBResidue::CheckForErrors()
 {   
     // Check for unique atom names.
     std::vector<std::string> tmp_atom_names = {};
-    for (int i = 0;i < atoms.size(); i++)
+    for (unsigned int i = 0;i < atoms.size(); i++)
     {
         tmp_atom_names.push_back(atoms[i].get_atom_name());
     }
@@ -88,7 +88,7 @@ void PDBResidue::CheckForErrors()
 void PDBResidue::set_resid(int new_resid)
 {
     resid = new_resid;
-    for (int i = 0;i < atoms.size(); i++)
+    for (unsigned int i = 0;i < atoms.size(); i++)
     {
         atoms[i].set_residue_number(resid);
     }
@@ -96,7 +96,7 @@ void PDBResidue::set_resid(int new_resid)
 void PDBResidue::set_resname(std::string new_resname)
 {
     resname = new_resname;
-    for (int i = 0;i < atoms.size(); i++)
+    for (unsigned int i = 0;i < atoms.size(); i++)
     {
         atoms[i].set_residue_name(resname);
     }
@@ -104,7 +104,7 @@ void PDBResidue::set_resname(std::string new_resname)
 void PDBResidue::set_chain_id(std::string new_chid)
 {
     chain_id = new_chid;
-    for (int i = 0;i < atoms.size(); i++)
+    for (unsigned int i = 0;i < atoms.size(); i++)
     {
         atoms[i].set_chain_id(chain_id);
     }

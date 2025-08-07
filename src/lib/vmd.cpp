@@ -80,7 +80,7 @@ void vmd::color_residue_by_beta(std::vector<double> array)
 {
     std::stringstream vmd;
     vmd.str("");
-    for(int i=0; i < array.size(); i++) 
+    for(unsigned int i=0; i < array.size(); i++) 
     {
         vmd << "[atomselect top \"resid " << i+1 << "\"] set beta " << array[i] << std::endl;
     }
@@ -91,7 +91,7 @@ void vmd::color_atom_by_beta(std::vector<double> array)
 {
     std::stringstream vmd;
     vmd.str("");
-    for(int i=0; i < array.size(); i++) 
+    for(unsigned int i=0; i < array.size(); i++) 
     {
         vmd << "[atomselect top \"index " << i << "\"] set beta " << array[i] << std::endl;
     }
