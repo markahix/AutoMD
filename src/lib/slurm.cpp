@@ -163,7 +163,7 @@ namespace slurm
         sys_command << " -q primary";
         sys_command << " -t 5-0:00:00 -N 1 -n 1";
         sys_command << " --mem=5GB";
-        sys_command << " -o SASA_%j.out -e SASA_%j.err --wrap \"" << slurm.SLURM_executable << " --sasa " << trajectory << "\"";
+        sys_command << " -o SASA_%j.out -e SASA_%j.err --wrap \"automd --sasa " << trajectory << "\"";
         std::string jobid = utils::GetSysResponse(sys_command.str().c_str());
         std::stringstream line;
         line.str(jobid);

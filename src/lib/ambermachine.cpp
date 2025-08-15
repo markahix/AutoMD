@@ -172,9 +172,9 @@ slurm_amber_module Amber/20-cuda-11
         }
         file.close();
 
-        std::cout << "DEBUG: slurm_nodelist = " << slurm.SLURM_nodelist << std::endl;
-        std::cout << "DEBUG: slurm_exclude_nodes = " << slurm.SLURM_exclude_nodes << std::endl;
-        std::cout << "DEBUG: slurm_amber_module = " << slurm.SLURM_amber_module << std::endl;
+        // std::cout << "DEBUG: slurm_nodelist = " << slurm.SLURM_nodelist << std::endl;
+        // std::cout << "DEBUG: slurm_exclude_nodes = " << slurm.SLURM_exclude_nodes << std::endl;
+        // std::cout << "DEBUG: slurm_amber_module = " << slurm.SLURM_amber_module << std::endl;
 
         return;
     }

@@ -66,7 +66,7 @@ void SetRestartFile(int startbead)
         std::stringstream lead_zero_number;
         lead_zero_number.str("");
         lead_zero_number << std::setw(4) << std::setfill('0') << startbead;
-        std::string restart_file = "05_Production/hot_equil." + lead_zero_number.str() + ".rst7";
+        std::string restart_file = "05_Production/prod." + lead_zero_number.str() + ".rst7";
         fs::copy(restart_file,"current_step.rst7");
     }
 }

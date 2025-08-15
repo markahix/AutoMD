@@ -1,13 +1,27 @@
 #include "ambermachine.h"
 
+void write_sasa_cpptraj_input(JobSettings settings)
+{
+    std::stringstream buffer;
+    buffer.str("");
+    buffer << "parm solvated.prmtop" << std::endl;
+    buffer << "trajin trajectory.mdcrd" << std::endl;
+    buffer << "molsurf Receptor_SASA " << settings.RECEPTOR_MASK << " out molsurf.dat" <<std::endl;
+    buffer << "molsurf Ligand_SASA " << settings.LIGAND_MASK << " out molsurf.dat" <<std::endl;
+    buffer << "molsurf Complex_SASA " << settings.COMPLEX_MASK << " out molsurf.dat" <<std::endl;
+    buffer << "run" << std::endl;
+    buffer << "quit" << std::endl;
+    utils::write_to_file("cpptraj.in",buffer.str());
+}
+
 namespace ambermachine
 {
-    void sasa(JobSettings settings,SlurmSettings slurm, std::string trajectory)
+    void sasa(JobSettings settings, SlurmSettings slurm, std::string trajectory)
     {
         // Update SLURM jobname
         std::stringstream buffer;
         buffer.str("");
-        buffer << "SASA_for_" << trajectory;
+        buffer << "SASA_for_" << fs::absolute(trajectory).filename();
         slurm::update_job_name(buffer.str());
 
         // copy necessary files into /tmp/
@@ -18,15 +32,7 @@ namespace ambermachine
         std::experimental::filesystem::current_path("/tmp/");
 
         // write cpptraj in file.
-        buffer.str("");
-        buffer << "parm solvated.prmtop" << std::endl;
-        buffer << "trajin trajectory.mdcrd" << std::endl;
-        buffer << "molsurf Receptor_SASA " << settings.RECEPTOR_MASK << " out molsurf.dat" <<std::endl;
-        buffer << "molsurf Ligand_SASA " << settings.LIGAND_MASK << " out molsurf.dat" <<std::endl;
-        buffer << "molsurf Complex_SASA " << settings.COMPLEX_MASK << " out molsurf.dat" <<std::endl;
-        buffer << "run" << std::endl;
-        buffer << "quit" << std::endl;
-        utils::write_to_file("cpptraj.in",buffer.str());
+        write_sasa_cpptraj_input(settings);
 
         // run cpptraj
         utils::silent_shell((const char*)"cpptraj < cpptraj.in > cpptraj.out");
@@ -34,7 +40,7 @@ namespace ambermachine
         // append data to main SASA.dat file.
         std::string sasa_dat = std::getenv("SLURM_SUBMIT_DIR");
         sasa_dat += "/SASA.dat";
-        if (!utils::CheckFileExists(sasa_dat))
+        if (!fs::exists(sasa_dat))
         {
             utils::write_to_file(sasa_dat,"#Frame    Receptor    Ligand  Complex\n");
         }

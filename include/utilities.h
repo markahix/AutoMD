@@ -19,6 +19,7 @@
 #include <iomanip>
 #include <ctime>
 #include <set>
+#include "config.h"
 
 
 namespace fs = std::experimental::filesystem;
