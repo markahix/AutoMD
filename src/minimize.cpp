@@ -67,11 +67,12 @@ int main(int argc, char** argv)
     // Update report
     update_report();
 
+    // create 01_Minimization directory.
+    fs::create_directory("01_Minimization");
+
     // create mdin.in for minimization
     write_mdin_minimize(settings);
 
-    // create 01_Minimization directory.
-    fs::create_directory("01_Minimization");
 
     // set filenames
     std::string mdout_file = "01_Minimization/init.0000.out";
@@ -104,6 +105,5 @@ int main(int argc, char** argv)
     
     // Create .AMBER_MINIMIZE_COMPLETE
     utils::write_to_file(".AMBER_MINIMIZE_COMPLETE","");
-    
     return 0;
 }

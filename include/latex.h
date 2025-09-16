@@ -19,6 +19,7 @@ namespace latex
     void compile_report(JobSettings settings);
     void figure_block_to_file(std::string image, std::string caption,std::string filename);
     void python_block_to_file(std::string python, std::string filename);
+    void figure_and_code_to_pdf(std::string imagefile, std::string caption, std::string codeblock, std::string jobname);
 }
 
 #endif

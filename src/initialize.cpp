@@ -115,10 +115,13 @@ void mask_checks(JobSettings settings)
         EPICFAIL = true;
         failure_log << "Keyword \"receptor_mask\" is not valid for these input files." << std::endl;
     }
-    if (cpptraj_mask_check(settings.PRMTOP, settings.INPCRD, settings.LIGAND_MASK))
+    if (settings.LIGAND_MASK != " ")
     {
-        EPICFAIL = true;
-        failure_log << "Keyword \"ligand_mask\" is not valid for these input files." << std::endl;
+        if (cpptraj_mask_check(settings.PRMTOP, settings.INPCRD, settings.LIGAND_MASK))
+        {
+            EPICFAIL = true;
+            failure_log << "Keyword \"ligand_mask\" is not valid for these input files." << std::endl;
+        }
     }
     if (cpptraj_mask_check(settings.PRMTOP, settings.INPCRD, settings.RMSD_MASK))
     {
@@ -300,6 +303,5 @@ int main(int argc, char** argv)
 
     // Create .AMBER_INITIALIZE_COMPLETE
     utils::write_to_file(".AMBER_INITIALIZE_COMPLETE","");
-
     return 0;
 }

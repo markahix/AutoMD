@@ -66,11 +66,11 @@ int main(int argc, char **argv)
     if (jobflag == "--initialize")
     {
         utils::silent_shell("automd_initialize");
+        fs::current_path(GetReplicateDirectory("./"));
         if (!fs::exists(".AMBER_INITIALIZE_COMPLETE"))
         {
             error_log("Failed to initialize simulation.  Please check error logs",1);
         }
-        fs::current_path(GetReplicateDirectory("./"));
         slurm::submit_minimize_job(settings,slurm);
         slurm::cleanup_out_err(slurm);
         return 0;

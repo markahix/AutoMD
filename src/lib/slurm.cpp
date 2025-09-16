@@ -228,24 +228,24 @@ namespace slurm
         //remove empty AMBER_*.out and *.err files.
         
         filename.str("");
-        filename << std::getenv("SLURM_SUBMIT_DIR") << "/AMBER_*"<< slurm.SLURM_JOB_ID << ".out";
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/AMBER_"<< slurm.SLURM_JOB_ID << ".out";
         delete_if_exists(filename.str());
         filename.str("");
-        filename << std::getenv("SLURM_SUBMIT_DIR") << "/AMBER_*"<< slurm.SLURM_JOB_ID << ".err";
-        delete_if_exists(filename.str());
-
-        filename.str("");
-        filename << std::getenv("SLURM_SUBMIT_DIR") << "/MMPBSA_*"<< slurm.SLURM_JOB_ID << ".out";
-        delete_if_exists(filename.str());
-        filename.str("");
-        filename << std::getenv("SLURM_SUBMIT_DIR") << "/MMPBSA_*"<< slurm.SLURM_JOB_ID << ".err";
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/AMBER_"<< slurm.SLURM_JOB_ID << ".err";
         delete_if_exists(filename.str());
 
         filename.str("");
-        filename << std::getenv("SLURM_SUBMIT_DIR") << "/SASA_*"<< slurm.SLURM_JOB_ID << ".out";
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/MMPBSA_"<< slurm.SLURM_JOB_ID << ".out";
         delete_if_exists(filename.str());
         filename.str("");
-        filename << std::getenv("SLURM_SUBMIT_DIR") << "/SASA_*"<< slurm.SLURM_JOB_ID << ".err";
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/MMPBSA_"<< slurm.SLURM_JOB_ID << ".err";
+        delete_if_exists(filename.str());
+
+        filename.str("");
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/SASA_"<< slurm.SLURM_JOB_ID << ".out";
+        delete_if_exists(filename.str());
+        filename.str("");
+        filename << std::getenv("SLURM_SUBMIT_DIR") << "/SASA_"<< slurm.SLURM_JOB_ID << ".err";
         delete_if_exists(filename.str());
     }
 
@@ -266,5 +266,4 @@ namespace slurm
         infile.close();
         utils::write_to_file(".JOBDEPENDENCIES",lines.str());
     }
-
 }

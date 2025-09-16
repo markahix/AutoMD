@@ -47,7 +47,7 @@ RES )" + startres + " " + endres + R"(
 END
 END
 )";
-    utils::write_to_file("mdin.in", heat_script);
+    utils::write_to_file("/tmp/mdin.in", heat_script);
     return;
 }
 
@@ -205,7 +205,7 @@ int main(int argc, char** argv)
     
     //ensure that matching rst7 is in the "current_step.rst7" position in the main directory.
     SetRestartFile(startbead);
-    if (startbead > 0)
+    // if (startbead > 0)
     
     // copy to /tmp
     fs::copy(settings.PRMTOP,"/tmp/job.prmtop");

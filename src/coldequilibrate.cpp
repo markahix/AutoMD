@@ -45,7 +45,7 @@ RES )" + startres + " " + endres + R"(
 END
 END
 )";
-    utils::write_to_file("mdin.in", mdin_text);
+    utils::write_to_file("/tmp/mdin.in", mdin_text);
     return;
 }
 

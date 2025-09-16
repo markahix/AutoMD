@@ -24,7 +24,7 @@ void parse_hbonds_avg(JobSettings settings)
 
     // begin hbond table in LaTeX. "00_Report/analysis_HBONDS.tex"
     buffer.str("");
-    buffer << "\\section{Hydrogen Bonding Analysis}" << std::endl;
+    buffer << "\\subsection{Hydrogen Bonding Analysis}" << std::endl;
     buffer << "\\paragraph{} Hydrogen bonding analysis was performed on atoms in " << settings.HBONDS_MASK << ". " << std::endl;
     if (settings.LIGAND_MASK != " " && settings.RECEPTOR_MASK != " ")
     {
@@ -352,150 +352,154 @@ void normal_mode_to_vmd(JobSettings settings, int num_modes)
     }
 }
 
-namespace ambermachine 
+void ambermachine::analysis(JobSettings settings, SlurmSettings slurm)
 {
-    void analysis(JobSettings settings,SlurmSettings slurm)
+    std::stringstream buffer;
+    // Update report timeline
+    slurm::update_job_name("Updating_Report_Timeline");
+    buffer.str("");
+    buffer << "Final Analysis & \\texttt{" << utils::GetTimeAndDate()<< "} & \\textbf{" << std::getenv("SLURM_JOB_ID") << "} \\\\" << std::endl;
+    buffer << "\\hline" << std::endl;
+    utils::append_to_file("00_Report/timeline.tex",buffer.str());
+
+    // prepare cpptraj.in, analyse.py, and report latex
+    utils::write_to_file("cpptraj.in",cpptraj::preamble(settings));
+    utils::write_to_file("analyse.py",python::preamble());
+
+    if (settings.RMSD_MASK != " ")  // Handle RMSD   
     {
-        std::stringstream buffer;
-        // Update report timeline
-        slurm::update_job_name("Updating_Report_Timeline");
-        buffer.str("");
-        buffer << "Final Analysis & \\texttt{" << utils::GetTimeAndDate()<< "} & \\textbf{" << std::getenv("SLURM_JOB_ID") << "} \\\\" << std::endl;
-        buffer << "\\hline" << std::endl;
-        utils::append_to_file("00_Report/timeline.tex",buffer.str());
-
-        // prepare cpptraj.in, analyse.py, and report latex
-        utils::write_to_file("cpptraj.in",cpptraj::preamble(settings));
-        utils::write_to_file("analyse.py",python::preamble());
-
-        if (settings.RMSD_MASK != " ")  // Handle RMSD   
-        {
-            utils::append_to_file("cpptraj.in",cpptraj::rmsd(settings));
-            utils::append_to_file("analyse.py",python::plot_rmsd());
-            std::stringstream caption;
-            caption.str("");
-            caption << "Root-mean-squared deviation (RMSD) for all residues in " << settings.RMSD_MASK << ".";
-            latex::figure_block_to_file("RMSD",caption.str(),"00_Report/analysis_RMSD.tex");
-            latex::python_block_to_file(python::plot_rmsd(), "00_Report/analysis_RMSD.tex");
-        }
-
-        if (settings.RMSF_MASK != " ")  // Handle RMSF
-        {
-            utils::append_to_file("cpptraj.in",cpptraj::rmsf(settings));
-            utils::append_to_file("analyse.py",python::plot_rmsf());
-            std::stringstream caption;
-            caption.str("");
-            caption << "Root-mean-squared fluctuation (RMSF) for all residues in " << settings.RMSF_MASK << ".";
-            latex::figure_block_to_file("RMSF",caption.str(),"00_Report/analysis_RMSF.tex");
-            latex::python_block_to_file(python::plot_rmsf(), "00_Report/analysis_RMSF.tex");
-        }
-
-        if (settings.CORREL_MASK != " ") // Handle Correlated Motion
-        {
-            utils::append_to_file("cpptraj.in",cpptraj::correl(settings));
-            utils::append_to_file("analyse.py",python::plot_correl());
-            std::stringstream caption;
-            caption.str("");
-            caption << "Correlated motion for all residue pairs in " << settings.CORREL_MASK << ".  Regions in blue indicate strong positive correlation (moving together) and regions in red indicate strong anticorrelation (moving opposite).";
-            latex::figure_block_to_file("Correlated_Motion",caption.str(),"00_Report/analysis_CORREL.tex");
-            latex::python_block_to_file(python::plot_correl(), "00_Report/analysis_CORREL.tex");
-        }
-
-        if (settings.HBONDS_MASK != " ") // Handle Hydrogen Bonding
-        {
-            utils::append_to_file("cpptraj.in",cpptraj::hbonds(settings));
-        }
-
-        if (settings.RECEPTOR_MASK != " " && settings.LIGAND_MASK != " ") // Handle Ligand Interaction Energy & SASA
-        {
-            // Ligand Interaction Energy
-            utils::append_to_file("cpptraj.in",cpptraj::ligand_interaction_energy(settings));
-            utils::append_to_file("analyse.py",python::plot_lie());
-            std::stringstream caption;
-            caption.str("");
-            caption << "Ligand interaction energy between all residues in " << settings.RECEPTOR_MASK << " and residues in " << settings.LIGAND_MASK << ".";
-            latex::figure_block_to_file("Ligand_Interaction_Energy",caption.str(),"00_Report/analysis_LIE.tex");
-            latex::python_block_to_file(python::plot_lie(), "00_Report/analysis_LIE.tex");
-            
-            // SASA
-            if (utils::CheckFileExists("SASA.dat"))
-            {
-                utils::append_to_file("analyse.py",python::plot_sasa());
-                caption.str("");
-                caption << "Solvent accessible surface areas (SASA) for receptor (" << settings.RECEPTOR_MASK << "), ligand (" << settings.LIGAND_MASK << "), and complex (" << settings.COMPLEX_MASK << "), plus buried interface (\\$A_{receptor} + A_{ligand} - A_{complex}\\$)";
-                latex::figure_block_to_file("SASA",caption.str(),"00_Report/analysis_SASA.tex");
-                latex::python_block_to_file(python::plot_sasa(), "00_Report/analysis_SASA.tex");
-            }
-            //Ramachandran Data
-            utils::append_to_file("cpptraj.in",cpptraj::multidihedral(settings));
-            
-
-        }
-
-        if (settings.NORMAL_MODES_MASK != " ") // Handle Normal Modes
-        {
-            utils::append_to_file("cpptraj.in",cpptraj::normal_modes(settings));
-            utils::append_to_file("analyse.py",python::plot_normal_modes());
-            utils::append_to_file("analyse.py",python::plot_pca());
-
-            std::stringstream caption;
-            
-            caption.str("");
-            caption << "Largest vibrational modes by residue in" << settings.NORMAL_MODES_MASK << ".";
-            latex::figure_block_to_file("Largest_Normal_Modes", caption.str(), "00_Report/analysis_NORMAL_MODES.tex");
-            latex::python_block_to_file(python::plot_normal_modes(), "00_Report/analysis_NORMAL_MODES.tex");
-                        
-            caption.str("");
-            caption << "Principle component analysis comparing the two largest vibrational modes in " << settings.NORMAL_MODES_MASK << ".";
-            latex::figure_block_to_file("PrincipleComponentAnalysis", caption.str(), "00_Report/analysis_NORMAL_MODES.tex");
-            latex::python_block_to_file(python::plot_pca(), "00_Report/analysis_NORMAL_MODES.tex");
-        }
-
-        prepare_clustering(settings);  // Handle Clustering (based on what...?)
-
-        utils::append_to_file("cpptraj.in",settings.CPPTRAJ_EXTRA_COMMANDS);
-        slurm::update_job_name("Running_CPPTRAJ_Analyses");
-
-        // run cpptraj.in
-        utils::silent_shell("cpptraj < cpptraj.in >> cpptraj.out");
-
-        // parse .nmd to .csv with parse_nmd_to_mode_csv(std::string nmdfile, std::string csvfile)
-        slurm::update_job_name("Parsing_CPPTRAJ_Outputs");
-        parse_nmd_to_mode_csv();
-
-        // run analyse.py
-        utils::silent_shell("python analyse.py; rm analyse.py");
-        
-        // Parse the HBond results into a nice table.
-        parse_hbonds_avg(settings);
-
-        // MMPBSA processing to plots!
-
-        // generate ambermachine.vmd and run for each: RMSF, Normal Modes (first 4 modes), correl (if ligand + receptor mask)
-        slurm::update_job_name("Generating_VMD_RMSF");
-        // RMSF (VMD)
-        rmsf_to_vmd(settings);
-
-        // Normal Modes (VMD)
-        slurm::update_job_name("Generating_VMD_NormalModes");
-        normal_mode_to_vmd(settings, 4); // first 4 normal modes
-
-        // If ligand mask + receptor mask:
-        // 1.  get correlation array based on ligand mask?
-        // 2.  call vmdwriter functions
-        // 3.  run vmd command.
-
-        // If ligand mask + receptor mask:
-        // Parse LIG_Hbond_table for intermolecular pairs, draw arrows from donorHs to acceptors
-        // ... run vmd command for this.
-
-        // compile the final report
-        latex::compile_report(settings);
-
-        // Create .AMBER_ANALYSIS_COMPLETE
-        utils::write_to_file(".AMBER_ANALYSIS_COMPLETE","");
-        // Cleanup
-        slurm::cleanup_out_err(slurm);
-        return;
+        utils::append_to_file("cpptraj.in",cpptraj::rmsd(settings));
+        utils::append_to_file("analyse.py",python::plot_rmsd());
+        std::stringstream caption;
+        caption.str("");
+        caption << "Root-mean-squared deviation (RMSD) for all residues in " << settings.RMSD_MASK << ".";
+        utils::append_to_file("00_Report/analysis_RMSD.tex","\\subsection{Root Mean Squared Deviation (RMSD)}");
+        latex::figure_block_to_file("RMSD",caption.str(),"00_Report/analysis_RMSD.tex");
+        latex::python_block_to_file(python::plot_rmsd(), "00_Report/analysis_RMSD.tex");
     }
+
+    if (settings.RMSF_MASK != " ")  // Handle RMSF
+    {
+        utils::append_to_file("cpptraj.in",cpptraj::rmsf(settings));
+        utils::append_to_file("analyse.py",python::plot_rmsf());
+        std::stringstream caption;
+        caption.str("");
+        caption << "Root-mean-squared fluctuation (RMSF) for all residues in " << settings.RMSF_MASK << ".";
+        utils::append_to_file("00_Report/analysis_RMSF.tex","\\subsection{Root Mean Squared Fluctuation (RMSF)}");
+        latex::figure_block_to_file("RMSF",caption.str(),"00_Report/analysis_RMSF.tex");
+        latex::python_block_to_file(python::plot_rmsf(), "00_Report/analysis_RMSF.tex");
+    }
+
+    if (settings.CORREL_MASK != " ") // Handle Correlated Motion
+    {
+        utils::append_to_file("cpptraj.in",cpptraj::correl(settings));
+        utils::append_to_file("analyse.py",python::plot_correl());
+        std::stringstream caption;
+        caption.str("");
+        caption << "Correlated motion for all residue pairs in " << settings.CORREL_MASK << ".  Regions in blue indicate strong positive correlation (moving together) and regions in red indicate strong anticorrelation (moving opposite).";
+        utils::append_to_file("00_Report/analysis_CORREL.tex","\\subsection{Correlated Motion}");
+        latex::figure_block_to_file("Correlated_Motion",caption.str(),"00_Report/analysis_CORREL.tex");
+        latex::python_block_to_file(python::plot_correl(), "00_Report/analysis_CORREL.tex");
+    }
+
+    if (settings.HBONDS_MASK != " ") // Handle Hydrogen Bonding
+    {
+        utils::append_to_file("cpptraj.in",cpptraj::hbonds(settings));
+    }
+
+    if (settings.RECEPTOR_MASK != " " && settings.LIGAND_MASK != " ") // Handle Ligand Interaction Energy & SASA
+    {
+        // Ligand Interaction Energy
+        utils::append_to_file("cpptraj.in",cpptraj::ligand_interaction_energy(settings));
+        utils::append_to_file("analyse.py",python::plot_lie());
+        std::stringstream caption;
+        caption.str("");
+        caption << "Ligand interaction energy between all residues in " << settings.RECEPTOR_MASK << " and residues in " << settings.LIGAND_MASK << ".";
+        utils::append_to_file("00_Report/analysis_LIE.tex","\\subsection{Ligand Interaction Energy}");
+        latex::figure_block_to_file("Ligand_Interaction_Energy",caption.str(),"00_Report/analysis_LIE.tex");
+        latex::python_block_to_file(python::plot_lie(), "00_Report/analysis_LIE.tex");
+        
+        // SASA
+        if (utils::CheckFileExists("SASA.dat"))
+        {
+            utils::append_to_file("analyse.py",python::plot_sasa());
+            caption.str("");
+            caption << "Solvent accessible surface areas (SASA) for receptor (" << settings.RECEPTOR_MASK << "), ligand (" << settings.LIGAND_MASK << "), and complex (" << settings.COMPLEX_MASK << "), plus buried interface (\\$A_{receptor} + A_{ligand} - A_{complex}\\$)";
+            utils::append_to_file("00_Report/analysis_SASA.tex","\\subsection{Solvent Accessible Surface Area (SASA)}");
+
+            latex::figure_block_to_file("SASA",caption.str(),"00_Report/analysis_SASA.tex");
+            latex::python_block_to_file(python::plot_sasa(), "00_Report/analysis_SASA.tex");
+        }
+        //Ramachandran Data
+        utils::append_to_file("cpptraj.in",cpptraj::multidihedral(settings));
+        
+
+    }
+
+    if (settings.NORMAL_MODES_MASK != " ") // Handle Normal Modes
+    {
+        utils::append_to_file("cpptraj.in",cpptraj::normal_modes(settings));
+        utils::append_to_file("analyse.py",python::plot_normal_modes());
+        utils::append_to_file("analyse.py",python::plot_pca());
+
+        std::stringstream caption;
+        
+        caption.str("");
+        caption << "Largest vibrational modes by residue in" << settings.NORMAL_MODES_MASK << ".";
+        utils::append_to_file("00_Report/analysis_NORMAL_MODES.tex","\\subsection{Normal Modes/Principal Component Analysis (PCA)}");
+        latex::figure_block_to_file("Largest_Normal_Modes", caption.str(), "00_Report/analysis_NORMAL_MODES.tex");
+        latex::python_block_to_file(python::plot_normal_modes(), "00_Report/analysis_NORMAL_MODES.tex");
+                    
+        caption.str("");
+        caption << "Principle component analysis comparing the two largest vibrational modes in " << settings.NORMAL_MODES_MASK << ".";
+        latex::figure_block_to_file("PrincipleComponentAnalysis", caption.str(), "00_Report/analysis_NORMAL_MODES.tex");
+        latex::python_block_to_file(python::plot_pca(), "00_Report/analysis_NORMAL_MODES.tex");
+    }
+
+    prepare_clustering(settings);  // Handle Clustering (based on what...?)
+
+    utils::append_to_file("cpptraj.in",settings.CPPTRAJ_EXTRA_COMMANDS);
+    slurm::update_job_name("Running_CPPTRAJ_Analyses");
+
+    // run cpptraj.in
+    utils::silent_shell("cpptraj < cpptraj.in >> cpptraj.out");
+
+    // parse .nmd to .csv with parse_nmd_to_mode_csv(std::string nmdfile, std::string csvfile)
+    slurm::update_job_name("Parsing_CPPTRAJ_Outputs");
+    parse_nmd_to_mode_csv();
+
+    // run analyse.py
+    utils::silent_shell("python analyse.py; rm analyse.py");
+    
+    // Parse the HBond results into a nice table.
+    parse_hbonds_avg(settings);
+
+    // MMPBSA processing to plots!
+
+    // generate ambermachine.vmd and run for each: RMSF, Normal Modes (first 4 modes), correl (if ligand + receptor mask)
+    slurm::update_job_name("Generating_VMD_RMSF");
+    // RMSF (VMD)
+    rmsf_to_vmd(settings);
+
+    // Normal Modes (VMD)
+    slurm::update_job_name("Generating_VMD_NormalModes");
+    normal_mode_to_vmd(settings, 4); // first 4 normal modes
+
+    // If ligand mask + receptor mask:
+    // 1.  get correlation array based on ligand mask?
+    // 2.  call vmdwriter functions
+    // 3.  run vmd command.
+
+    // If ligand mask + receptor mask:
+    // Parse LIG_Hbond_table for intermolecular pairs, draw arrows from donorHs to acceptors
+    // ... run vmd command for this.
+
+    // compile the final report
+    latex::compile_report(settings);
+
+    // Create .AMBER_ANALYSIS_COMPLETE
+    utils::write_to_file(".AMBER_ANALYSIS_COMPLETE","");
+    // Cleanup
+    slurm::cleanup_out_err(slurm);
+    return;
 }

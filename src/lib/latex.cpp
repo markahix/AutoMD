@@ -4,7 +4,7 @@ std::string GetUserFullName()
 {
     std::stringstream dummy;
     dummy.str("");
-    dummy << "finger " <<std::getenv("USER");
+    dummy << "finger " << std::getenv("USER");
     std::string finger = utils::GetSysResponse(dummy.str().c_str());
     std::string::size_type sel_1 = finger.find("Name:")+5;
     std::string::size_type sel_2 = finger.find("Directory:");
@@ -19,6 +19,61 @@ std::string ligand_analysis_text(JobSettings settings)
     }
     return " ";
 }
+
+int get_n_lines_in_textblock(std::string textblock)
+{
+    int n_lines = 1;
+    for (char c : textblock)
+    {
+        if (c == '\n')
+        {
+            n_lines++;
+        }
+    }
+    return n_lines;
+}
+
+void latex::figure_and_code_to_pdf(std::string imagefile, std::string caption, std::string codeblock, std::string jobname)
+{  
+    // Make a figure, caption, and code block into a single PDF without page numbers.
+    std::string label = imagefile.substr(0,imagefile.find_last_of('.')-1);
+    int n_lines_in_code = get_n_lines_in_textblock(codeblock);
+    std::string latex = R"(\documentclass[letterpaper,11pt]{article}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage{minted}
+\usepackage{tcolorbox}
+\usepackage{etoolbox}
+\usepackage{placeins}
+\pagestyle{empty}
+\begin{document}
+\begin{figure}[htbp] 
+\centering
+\includegraphics[width=\textwidth]{)" + imagefile + R"(}
+\caption{)" + caption + R"(}
+\end{figure}
+\FloatBarrier
+)";
+    if (n_lines_in_code > 10)
+    {
+        latex += R"(
+\clearpage
+)";
+    }
+    latex += R"(\begin{tcolorbox}[title=Image Generation Script,colframe=green!50!black]
+\begin{minted}{python}
+)" + codeblock + R"(
+\end{minted}
+\end{tcolorbox}
+)";
+
+    utils::write_to_file("tmp.tex",latex);
+    std::string cmd = "module load texlive/2020; pdflatex --jobname=" + jobname + "tmp.tex";
+    utils::silent_shell(cmd.c_str());
+
+}
+
 void latex::write_main_tex()
 {
     // Get user's full name.
@@ -35,14 +90,16 @@ void latex::write_main_tex()
 \usepackage{etoolbox}
 \usepackage{placeins}
 \usepackage{longtable}
+\usepackage{pdfpages}
 \title{Automatic Amber Molecular Dynamics Report}
 \author{User: \textbf{)" + username + R"(} \\ Wayne State University Grid}
 \date{\today}
 \begin{document}
 \maketitle
+\tableofcontents
 \clearpage
 \input{timeline.tex}
-\end{tabular}
+\end{longtable}
 \clearpage
 \input{initialize.tex}
 \clearpage
@@ -64,12 +121,12 @@ void latex::write_main_tex()
 void latex::write_timeline_tex()
 {
     std::string rawtext = R"(
-\section*{Job Timeline}
-\begin{tabular}{|p{0.3\textwidth}|p{0.3\textwidth}|p{0.3\textwidth}|}
+\section{Job Timeline}
+begin{longtable}{|p{0.3\textwidth}|p{0.3\textwidth}|p{0.3\textwidth}|}
 \hline
 Stage & Date/Time & Job ID Number \\
 \hline
-Initialization & \texttt{)" + utils::GetSysResponse("date") + R"(} & \textbf{)" +  std::getenv("SLURM_JOB_ID") + R"( << "} \\
+Initialization & \texttt{)" + utils::GetTimeAndDate() + R"(} & \textbf{)" +  std::getenv("SLURM_JOB_ID") + R"( << "} \\
 \hline" << std::endl;
 )";
     utils::write_to_file("00_Report/timeline.tex",rawtext);
@@ -77,7 +134,7 @@ Initialization & \texttt{)" + utils::GetSysResponse("date") + R"(} & \textbf{)" 
 void latex::write_initialize_tex(JobSettings settings)
 {
     std::string rawtext = R"(
-\section*{Initialization}
+\section{Initialization}
 \subsection*{Job Settings}
 \noindent\begin{tabular}{|p{0.2\textwidth}|p{0.7\textwidth}|}
 \hline
@@ -94,7 +151,7 @@ Input Coordinates: & \verb|)" + settings.INPCRD + R"(\\
 void latex::write_minimization_tex()
 {
     std::string rawtext=R"(
-\section*{System Minimization}
+\section{System Minimization}
 \paragraph{} Minimization removes potential clashes from starting structures (such as from the addition of hydrogens to a crystal structure).
 
 )";
@@ -103,7 +160,7 @@ void latex::write_minimization_tex()
 void latex::write_cold_equil_tex(JobSettings settings)
 {
     std::string rawtext=R"(
-\section*{Cold Density Equilibration}
+\section{Cold Density Equilibration}
 \paragraph{}Cold density equilibration at 10K, holding pressure constant (NPT ensemble).
 Restraints are iteratively relaxed (linear descent over)" 
 + std::to_string(settings.NUM_COLD_STEPS) + 
@@ -119,7 +176,7 @@ R"($kcal\\cdot mol^{-1}$.
 void latex::write_heating_tex()
 {
     std::string rawtext = R"(
-\section*{System Heating}
+\section{System Heating}
 \paragraph{}Heating through iterative steps at 10K, 20K, 50K, 100K, 150K, 200K, 250K, 300K, 325K, and 300K.
 Each stage runs for 10000 timesteps (0.01 ns) for a total of 0.1ns of simulated heating to final temperature of 300K.
 )";
@@ -129,7 +186,7 @@ Each stage runs for 10000 timesteps (0.01 ns) for a total of 0.1ns of simulated 
 void latex::write_hot_equil_tex(JobSettings settings)
 {
     std::string rawtext = R"(
-\section*{Hot Density Equilibration}
+\section{Hot Density Equilibration}
 \paragraph{}Hot density equilibration at 300K, holding pressure constant (NPT ensemble).
 Restraints are iteratively relaxed (linear descent over)" 
 + std::to_string(settings.NUM_HOT_STEPS) + 
@@ -145,12 +202,12 @@ R"($kcal\\cdot mol^{-1}$.
 void latex::write_production_tex(JobSettings settings)
 {
     std::string rawtext = R"(
-\section*{Production Molecular Dynamics}
+\section{Production Molecular Dynamics}
 \paragraph{}Production molecular dynamics will be run with a 1fs timestep for)" + std::to_string(settings.NUM_PROD_STEPS) 
 + R"(ns with periodic boundary conditions at constant volume (NVT ensemble).
 )";
     std::string mmpbsa_text = R"(
-\subsection*{MMPBSA Calculations}
+\subsection{MMPBSA Calculations}
 \paragraph{} MMPBSA calculations will be performed alongside production.  These calculations are intended to calculate the binding energy for a given complex.
 
 \noindent \begin{tabular}{|p{0.2\textwidth}|p{0.7\textwidth}|}
@@ -172,8 +229,8 @@ Complex mask:     & )" + settings.COMPLEX_MASK + R"( \\
 void latex::write_analysis_tex(JobSettings settings)
 {
     std::string rawtext = R"(
-\section*{Analysis}
-\subsection*{Base Analyses}
+\section{Analysis}
+\subsection{Base Analyses}
 \paragraph{} Basic analyses will be performed upon completion of production MD.
 \begin{itemize}
 \item \textbf{RMSD} - Root-mean-squared deviation is a measure of how far from a given reference structure (usually starting coordinates) a molecular dynamics system has changed.  Useful for monitoring conformational changes and system stability.
@@ -238,36 +295,46 @@ void latex::write_analysis_tex(JobSettings settings)
     {
         utils::write_to_file("00_Report/analysis_RMSD.tex","");
         buffer << "\\input{analysis_RMSD.tex}" << std::endl;
+        buffer << "\\FloatBarrier" <<std::endl;
     }
     if (settings.RMSF_MASK != " ")
     {
         utils::write_to_file("00_Report/analysis_RMSF.tex","");
         buffer << "\\input{analysis_RMSF.tex}" << std::endl;
+        buffer << "\\FloatBarrier" <<std::endl;
     }
     if (settings.HBONDS_MASK != " ")
     {
         utils::write_to_file("00_Report/analysis_HBONDS.tex","");
         buffer << "\\input{analysis_HBONDS.tex}" << std::endl;
+        buffer << "\\FloatBarrier" <<std::endl;
     }
     if (settings.NORMAL_MODES_MASK != " ")
     {
         utils::write_to_file("00_Report/analysis_NORMAL_MODES.tex","");
         buffer << "\\input{analysis_NORMAL_MODES.tex}" << std::endl;
+        buffer << "\\FloatBarrier" <<std::endl;
     }
     if (settings.CORREL_MASK != " ")
     {
         utils::write_to_file("00_Report/analysis_CORREL.tex","");
         buffer << "\\input{analysis_CORREL.tex}" << std::endl;
+        buffer << "\\FloatBarrier" <<std::endl;
     }
     if (settings.LIGAND_MASK != " " && settings.RECEPTOR_MASK != " ")
     {
         utils::write_to_file("00_Report/analysis_LIE.tex","");
         buffer << "\\input{analysis_LIE.tex}" << std::endl;
+        buffer << "\\FloatBarrier" <<std::endl;
+        
+        utils::write_to_file("00_Report/analysis_SASA.tex","");
         buffer << "\\input{analysis_SASA.tex}" << std::endl;
+        buffer << "\\FloatBarrier" <<std::endl;
     }
-    buffer << std::endl << "\\subsection{Final Analysis}" << std::endl;
+    // buffer << std::endl << "\\subsection{Final Analysis}" << std::endl;
     utils::append_to_file("00_Report/analysis.tex",buffer.str());
 }
+
 void latex::initialize_report(JobSettings settings)
 {
     // Create report directory
@@ -283,18 +350,24 @@ void latex::initialize_report(JobSettings settings)
     write_analysis_tex(settings);
     compile_report(settings);
 }
+
 void latex::compile_report(JobSettings settings)
 {
     std::string curr_path = std::experimental::filesystem::current_path();
     std::experimental::filesystem::current_path("00_Report/");
     std::stringstream buffer;
     buffer.str("");
-    buffer << "module load texlive/2020; pdflatex -interaction=nonstopmode --shell-escape main.tex > /dev/null";
+    buffer << "module load texlive/2020; ";
+    buffer << "pdflatex -interaction=nonstopmode --shell-escape main.tex; ";
+    buffer << "bibtex main.aux; ";
+    buffer << "pdflatex -interaction=nonstopmode --shell-escape main.tex; ";
+    buffer << "pdflatex -interaction=nonstopmode --shell-escape main.tex";
     utils::silent_shell(buffer.str().c_str());
     if (fs::exists("main.pdf"))
     {
         buffer.str("");
-        buffer << "mv main.pdf ../" << settings.PRMTOP.substr(0,settings.PRMTOP.find(".prmtop")) << "_Report.pdf";
+        buffer << "mv main.pdf ../" << settings.PRMTOP.substr(0,settings.PRMTOP.find(".prmtop")) << "_Report.pdf;";
+        buffer << "rm main.aux main.log main.bbl main.toc main.blg;";
         utils::silent_shell(buffer.str().c_str());
     }    
     std::experimental::filesystem::current_path(curr_path);
