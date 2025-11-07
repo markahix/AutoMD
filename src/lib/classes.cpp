@@ -38,15 +38,18 @@ JobSettings::JobSettings()
     NUM_HOT_STEPS    = 10;
     NUM_PROD_STEPS   = 100;
     COMPRESS_STAGES = false;
-    
-    //MMPBSA settings
+
+    // Environmental Settings
+    TEMPERATURE = 300;
+
+    // MMPBSA settings
     RUN_MMPBSA = false;
     RECEPTOR_MASK=" ";
     LIGAND_MASK=" ";
     COMPLEX_MASK=" ";
     SALT_CONC = 0.00;
 
-    //Analysis Settings
+    // Analysis Settings
     RMSD_MASK=" ";
     RMSF_MASK=" ";
     HBONDS_MASK=" ";

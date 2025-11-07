@@ -54,7 +54,7 @@ bool cpptraj_mask_check(std::string prmtop, std::string inpcrd, std::string mask
     buffer << "trajin " << inpcrd << std::endl;
     buffer << "select " << mask <<std::endl;
     utils::write_to_file("cpptraj_mask_test.in",buffer.str());
-    utils::silent_shell("module load Amber/20-cuda-11; cpptraj < cpptraj_mask_test.in > cpptraj_mask_test.out");
+    utils::silent_shell("cpptraj < cpptraj_mask_test.in > cpptraj_mask_test.out");
 
     std::ifstream file("cpptraj_mask_test.out");
     if (file.is_open()) 
@@ -210,34 +210,37 @@ void generate_mmpbsa_inputs(JobSettings settings, SlurmSettings slurm)
     std::stringstream buffer;
     buffer.str("");
     buffer << "parm " << settings.PRMTOP << std::endl;
-    buffer << "strip !" << settings.COMPLEX_MASK << std::endl;
-    buffer << "outparm MMPBSA_Inputs/complex.prmtop" << std::endl << "quit" << std::endl;
+    buffer << "parmstrip !" << settings.COMPLEX_MASK << std::endl;
+    buffer << "parmwrite out MMPBSA_Inputs/complex.prmtop" << std::endl << "quit" << std::endl;
     utils::write_to_file("parmed.in",buffer.str());
     buffer.str("");
     // buffer << "module load " << slurm.SLURM_amber_module << "; ";
-    buffer << "module load amber/20; parmed -i parmed.in > complex_parmed.log && rm parmed.in";
+    buffer << "cpptraj -i parmed.in > complex_parmed.log && rm parmed.in";
+    slurm::update_job_name("Generating_MMPBSA_Inputs.complex");
     utils::silent_shell(buffer.str().c_str());
 
     // Generate receptor.prmtop
     buffer.str("");
     buffer << "parm " << settings.PRMTOP << std::endl;
-    buffer << "strip !" << settings.RECEPTOR_MASK << std::endl;
-    buffer << "outparm MMPBSA_Inputs/receptor.prmtop" << std::endl << "quit" << std::endl;
+    buffer << "parmstrip !" << settings.RECEPTOR_MASK << std::endl;
+    buffer << "parmwrite out MMPBSA_Inputs/receptor.prmtop" << std::endl << "quit" << std::endl;
     utils::write_to_file("parmed.in",buffer.str());
     buffer.str("");
     // buffer << "module load " << slurm.SLURM_amber_module << "; ";
-    buffer << "module load amber/20; parmed -i parmed.in > receptor_parmed.log && rm parmed.in";
+    buffer << "cpptraj -i parmed.in > receptor_parmed.log && rm parmed.in";
+    slurm::update_job_name("Generating_MMPBSA_Inputs.receptor");
     utils::silent_shell(buffer.str().c_str());
 
     // Generate ligand.prmtop
     buffer.str("");
     buffer << "parm " << settings.PRMTOP << std::endl;
-    buffer << "strip !" << settings.LIGAND_MASK << std::endl;
-    buffer << "outparm MMPBSA_Inputs/ligand.prmtop" << std::endl << "quit" << std::endl;
+    buffer << "parmstrip !" << settings.LIGAND_MASK << std::endl;
+    buffer << "parmwrite out MMPBSA_Inputs/ligand.prmtop" << std::endl << "quit" << std::endl;
     utils::write_to_file("parmed.in",buffer.str());
     buffer.str("");
     // buffer << "module load " << slurm.SLURM_amber_module << "; ";
-    buffer << "module load amber/20; parmed -i parmed.in > ligand_parmed.log && rm parmed.in";
+    buffer << "cpptraj -i parmed.in > ligand_parmed.log && rm parmed.in";
+    slurm::update_job_name("Generating_MMPBSA_Inputs.ligand");
     utils::silent_shell(buffer.str().c_str());
 
     // Generate mmpbsa.in
@@ -299,6 +302,7 @@ int main(int argc, char** argv)
     latex::initialize_report(settings);
     
     // Compile Current Report
+    slurm::update_job_name("Compiling_Report");
     latex::compile_report(settings);
 
     // Create .AMBER_INITIALIZE_COMPLETE

@@ -6,7 +6,7 @@ void write_mdin_hot_relax(JobSettings settings, double restraint_value)
     std::string startres,endres;
     if (dashpos != std::string::npos)
     {
-        startres = settings.COMPLEX_MASK.substr(colpos + 1, dashpos - colpos);
+        startres = settings.COMPLEX_MASK.substr(colpos + 1, dashpos - colpos - 1);
         endres = settings.COMPLEX_MASK.substr(dashpos + 1, settings.COMPLEX_MASK.length());
     }
     else
@@ -15,7 +15,7 @@ void write_mdin_hot_relax(JobSettings settings, double restraint_value)
         endres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
     } 
     std::stringstream buffer;
-    std::string heat_script = R"HEATSCRIPT(
+    std::string heat_script = R"(
 Hot Density Equilibration
   &cntrl
   ntx      = 7, 
@@ -33,8 +33,8 @@ Hot Density Equilibration
   ntb      = 2, 
   ntp      = 2,
   ntt      = 3, 
-  temp0    = 300.0, 
-  tempi    = 300.0, 
+  temp0    = )" + std::to_string(settings.TEMPERATURE) + R"(, 
+  tempi    = )" + std::to_string(settings.TEMPERATURE) + R"(, 
   tautp    = 1.0, 
   gamma_ln = 5.0,
   ntr      = 1,
@@ -42,7 +42,7 @@ Hot Density Equilibration
   vlimit   = -1,
  /
 Hold molecule fixed
-)HEATSCRIPT" + std::to_string(restraint_value) + R"(
+)" + std::to_string(restraint_value) + R"(
 RES )" + startres + " " + endres + R"(
 END
 END
@@ -210,6 +210,7 @@ int main(int argc, char** argv)
     // copy to /tmp
     fs::copy(settings.PRMTOP,"/tmp/job.prmtop");
     fs::copy("current_step.rst7","/tmp/last_step.rst7");
+    fs::copy(settings.INPCRD,"/tmp/start_coords.rst7");
 
     std::string filebasename = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/04_HotDensityEquilibration/hot_equil.";
         

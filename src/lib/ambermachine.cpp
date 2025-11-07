@@ -21,6 +21,11 @@ n_prod_steps       100
 compress_stages    True # Compress trajectory fragments for each stage into one file.
 
 #######################
+##### Environment #####
+#######################
+temperature        300
+
+#######################
 ### MMPBSA Settings ###
 #######################
 run_mmpbsa         True  #Delete this line if you don't want MMPBSA
@@ -143,6 +148,8 @@ slurm_amber_module Amber/20-cuda-11
                 job_settings.COMPLEX_MASK = value;
             else if (setting == "salt_concentration")
                 job_settings.SALT_CONC = stod(value);
+            else if (setting == "temperature")
+                job_settings.TEMPERATURE = stod(value);
             else if (setting == "rmsd_mask")
                 job_settings.RMSD_MASK = value;
             else if (setting == "rmsf_mask")
@@ -246,37 +253,76 @@ slurm_amber_module Amber/20-cuda-11
 
         std::stringstream buffer;
         buffer.str("");
-        buffer << "module load " << slurm.SLURM_amber_module << "; $AMBERHOME/bin/pmemd.cuda -O";
+        buffer << "pmemd.cuda -O";
         buffer << " -i mdin.in";
         buffer << " -o mdout.out";
         buffer << " -p job.prmtop";
         buffer << " -c last_step.rst7";
         buffer << " -r current_step.rst7";
         buffer << " -x trajectory.mdcrd";
-        buffer << " -ref last_step.rst7";
+        buffer << " -ref start_coords.rst7";
         utils::silent_shell(buffer.str().c_str());
         fs::current_path(curr_path);
     }
 
     void AmberCopyBack(std::string mdin_file,std::string restart_file, std::string mdout_file, std::string trajectory_file, std::string csv_file)
     {
+        bool EPIC_FAIL = false;
         std::string curr_path = fs::current_path();
         fs::current_path("/tmp/");
         // copy back from /tmp
-        fs::copy("mdin.in",mdin_file,fs::copy_options::update_existing);
-        fs::remove("mdin.in");
-        fs::copy("current_step.rst7",restart_file);
-        fs::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",fs::copy_options::update_existing);
-        fs::copy("current_step.rst7","last_step.rst7",fs::copy_options::update_existing);
-        fs::remove("current_step.rst7");
-        fs::copy("mdout.out",mdout_file);
-        fs::remove("mdout.out");
-        fs::copy("trajectory.mdcrd",trajectory_file);
-        fs::remove("trajectory.mdcrd");
+        if (fs::exists("mdin.in"))
+        {
+            fs::copy("mdin.in",mdin_file,fs::copy_options::update_existing);
+            fs::remove("mdin.in");
+        }
+        else
+        {
+            EPIC_FAIL = true;
+            error_log("mdin.in does not exist in /tmp/!  There was a problem.");
+        }
+
+        if (fs::exists("current_step.rst7"))
+        {
+            fs::copy("current_step.rst7",restart_file);
+            fs::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",fs::copy_options::update_existing);
+            fs::copy("current_step.rst7","last_step.rst7",fs::copy_options::update_existing);
+            fs::remove("current_step.rst7");
+        }
+        else
+        {
+            EPIC_FAIL = true;
+            error_log("current_step.rst7 does not exist in /tmp/!  There was a problem.");
+        }
+        
+        if (fs::exists("mdout.out"))
+        {
+            fs::copy("mdout.out",mdout_file);
+            fs::remove("mdout.out");
+            utils::mdout_to_csv(mdout_file,csv_file);
+        }
+        else
+        {
+            EPIC_FAIL = true;
+            error_log("mdout.out does not exist in /tmp/!  There was a problem.");
+        }
+
+        if (fs::exists("trajectory.mdcrd"))
+        {
+            fs::copy("trajectory.mdcrd",trajectory_file);
+            fs::remove("trajectory.mdcrd");
+        }
+        else
+        {
+            EPIC_FAIL = true;
+            error_log("trajectory.mdcrd does not exist in /tmp/!  There was a problem.");
+        }
 
         // Parse mdout into HotEquil.csv
-        utils::mdout_to_csv(mdout_file,csv_file);
+        if (EPIC_FAIL)
+        {
+            error_log("Files were missing! Terminating.",1);
+        }
         fs::current_path(curr_path);
-
 }
 }

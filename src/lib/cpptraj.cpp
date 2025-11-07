@@ -134,7 +134,7 @@ namespace cpptraj
     std::string multidihedral(JobSettings settings){
         std::stringstream cpptraj;
         cpptraj.str("");//
-        cpptraj << "multidihedral Ramachandran phi psi resrange " << settings.RECEPTOR_MASK.substr(1,settings.LIGAND_MASK.size()) << " out 06_Analysis/RamachandranData.csv" << std::endl;
+        cpptraj << "multidihedral Ramachandran phi psi resrange " << settings.RECEPTOR_MASK.substr(1,settings.RECEPTOR_MASK.size()-1) << " out 06_Analysis/RamachandranData.csv" << std::endl;
         return cpptraj.str();
     }
 }

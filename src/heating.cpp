@@ -15,7 +15,29 @@ void write_mdin_heating(JobSettings settings)
         startres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
         endres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
     } 
-    std::string heat_script = R"HEATSCRIPT(Heating
+    std::string iterative_heating_section = "";
+    int heating_stage_interval_nsteps = 5000;
+    int start_step = 0;
+    int end_step = start_step + heating_stage_interval_nsteps;
+    double start_temp = 0.0;
+    double end_temp = 10.0;
+    while (start_temp <= settings.TEMPERATURE + 20.0)
+    {
+        std::stringstream temp_line;
+        temp_line.str("");
+        temp_line << "&wt type='TEMP0', istep1=" << std::setw(5) << std::setfill('0') << start_step;
+        temp_line << ", istep2=" << std::setw(5) << std::setfill('0') << end_step;
+        temp_line << ", value1=" << std::fixed << std::setprecision(1) << start_temp;
+        temp_line << ", value2=" << std::fixed << std::setprecision(1) << end_temp;
+        temp_line << ",  &end" << std::endl;
+        iterative_heating_section += temp_line.str();
+        start_step = end_step + 1;
+        end_step = end_step + heating_stage_interval_nsteps;
+        start_temp = end_temp;
+        end_temp = end_temp + 10;
+    }
+
+    std::string heat_script = R"(Heating
  &cntrl
   ntx      = 7,
   irest    = 1,
@@ -23,7 +45,7 @@ void write_mdin_heating(JobSettings settings)
   ntpr     = 100,
   ntwx     = 1000,
   ntwv     = 00,
-  nstlim   = 100000,
+  nstlim   = )" + std::to_string(start_step-1) + R"(,
   t        = 0.00,
   dt       = 0.00100,
   ntc      = 2,
@@ -39,19 +61,9 @@ void write_mdin_heating(JobSettings settings)
   cut      = 10.0,
   nmropt   = 1 
  /
- &wt type='TEMP0', istep1=00000, istep2=05000, value1=000., value2=010.,  &end
- &wt type='TEMP0', istep1=05001, istep2=10000, value1=010., value2=020.,  &end
- &wt type='TEMP0', istep1=10001, istep2=20000, value1=020., value2=050.,  &end
- &wt type='TEMP0', istep1=20001, istep2=30000, value1=050., value2=100.,  &end
- &wt type='TEMP0', istep1=30001, istep2=40000, value1=100., value2=150.,  &end
- &wt type='TEMP0', istep1=40001, istep2=50000, value1=150., value2=200.,  &end
- &wt type='TEMP0', istep1=50001, istep2=60000, value1=200., value2=250.,  &end
- &wt type='TEMP0', istep1=60001, istep2=70000, value1=250., value2=300.,  &end
- &wt type='TEMP0', istep1=70001, istep2=80000, value1=300., value2=325.,  &end
- &wt type='TEMP0', istep1=80001,istep2=100000, value1=325., value2=300.,  &end
- &wt type='END'  &end
+)" + iterative_heating_section + R"( &wt type='END'  &end
 Hold molecule fixed
-)HEATSCRIPT" + std::to_string(settings.MAX_RESTRAINT) + R"(
+)" + std::to_string(settings.MAX_RESTRAINT) + R"(
 RES )" + startres + " " + endres + R"(
 END
 END
@@ -159,6 +171,7 @@ int main(int argc, char** argv)
     // copy to /tmp
     fs::copy(settings.PRMTOP,"/tmp/job.prmtop");
     fs::copy("current_step.rst7","/tmp/last_step.rst7");
+    fs::copy(settings.INPCRD,"/tmp/start_coords.rst7");
 
     // change directory to /tmp
     fs::current_path("/tmp/");

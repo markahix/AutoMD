@@ -65,7 +65,7 @@ int main(int argc, char **argv)
     // Identify the correct function to call based on provided command line flag.
     if (jobflag == "--initialize")
     {
-        utils::silent_shell("automd_initialize");
+        utils::silent_shell("automd_initialize 1> automd_init.out 2> automd_init.err");
         fs::current_path(GetReplicateDirectory("./"));
         if (!fs::exists(".AMBER_INITIALIZE_COMPLETE"))
         {
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 
     if (jobflag == "--minimize")
     {
-        utils::silent_shell("automd_minimize");
+        utils::silent_shell("automd_minimize 1> automd_minim.out 2> automd_minim.err");
         if (!fs::exists(".AMBER_MINIMIZE_COMPLETE"))
         {
             error_log("Failed to complete minimization.  Please check error logs",1);
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
 
     if (jobflag == "--coldrelax")
     {
-        utils::silent_shell("automd_coldequilibrate");
+        utils::silent_shell("automd_coldequilibrate 1> automd_cold_eq.out 2> automd_cold_eq.err");
         if (!fs::exists(".AMBER_COLD_RELAX_COMPLETE"))
         {
             error_log("Failed to complete cold density equilibration.  Please check error logs",1);
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 
     if (jobflag == "--heating")
     {
-        utils::silent_shell("automd_heating");
+        utils::silent_shell("automd_heating 1> automd_heating.out 2> automd_heating.err");
         if (!fs::exists(".AMBER_HEATING_COMPLETE"))
         {
             error_log("Failed to complete heating.  Please check error logs",1);
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 
     if (jobflag == "--hotrelax")
     {
-        utils::silent_shell("automd_hotequilibrate");
+        utils::silent_shell("automd_hotequilibrate 1> automd_hot_eq.out 2> automd_hot_eq.err");
         if (!fs::exists(".AMBER_HOT_RELAX_COMPLETE"))
         {
             error_log("Failed to complete hot density equilibration.  Please check error logs",1);
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 
     if (jobflag == "--production")
     {
-        utils::silent_shell("automd_production");
+        utils::silent_shell("automd_production 1> automd_prod.out 2> automd_prod.err");
         if (!fs::exists(".AMBER_PRODUCTION_COMPLETE"))
         {
             error_log("Failed to complete production.  Please check error logs",1);

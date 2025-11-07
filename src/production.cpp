@@ -10,9 +10,9 @@ void UpdateReport()
         utils::append_to_file("00_Report/timeline.tex",buffer.str());
 }
 
-void write_mdin_production()
+void write_mdin_production(JobSettings settings)
 {
-    std::string heat_script = R"HEATSCRIPT(
+    std::string heat_script = R"(
 Molecular Dynamics Production
  &cntrl
   ntx      = 5,
@@ -29,8 +29,8 @@ Molecular Dynamics Production
   ntf      = 2,
   ntp      = 2,
   ntt      = 3,
-  temp0    = 300.0, 
-  tempi    = 300.0, 
+  temp0    = )" + std::to_string(settings.TEMPERATURE) + R"(, 
+  tempi    = )" + std::to_string(settings.TEMPERATURE) + R"(, 
   gamma_ln = 5.0, 
   vlimit   = -1.0,
   iwrap    = 1,
@@ -40,7 +40,7 @@ Molecular Dynamics Production
  /
  &wt type='REST', istep1=000000,istep2=5000, &end
  &wt type='END'  &end /
-)HEATSCRIPT";
+)";
     utils::write_to_file("mdin.in",heat_script);
     return;
 }
@@ -97,10 +97,10 @@ void ProductionLoop(JobSettings settings, SlurmSettings slurm, int startbead, st
         jobname.str("");
         jobname << "Running_Production_Step_" << i+1 << "_of_" << settings.NUM_PROD_STEPS;
         slurm::update_job_name(jobname.str());
-        write_mdin_production();
+        write_mdin_production(settings);
 
         // set filenames
-        GenerateFileNames(files,filebasename, i+1);
+        GenerateFileNames(files, filebasename, i+1);
 
         // load amber module, then run Amber (pmemd.cuda)
         std::cout << "DEBUG: In Production Function, slurm_amber_module is:  " << slurm.SLURM_amber_module << std::endl;
@@ -278,6 +278,7 @@ int main(int argc, char** argv)
     // copy to /tmp
     fs::copy(settings.PRMTOP,"/tmp/job.prmtop");
     fs::copy("current_step.rst7","/tmp/last_step.rst7");
+    fs::copy(settings.INPCRD,"/tmp/start_coords.rst7");
 
     // Loop over all production steps
     

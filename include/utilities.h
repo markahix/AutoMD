@@ -26,6 +26,7 @@ namespace fs = std::experimental::filesystem;
 
 
 void error_log(std::string message,int exit_code);
+void error_log(std::string message);
 void normal_log(std::string message);
 
 namespace utils
@@ -34,6 +35,7 @@ namespace utils
     void silent_shell(const char* cmd);
     std::string GetSysResponse(const char* cmd);
     bool CheckProgAvailable(const char* program);
+    bool CheckProgAvailable(const char* program, const char* module);
     void write_to_file(std::string inputfilename, std::string buffer);
     void append_to_file(std::string inputfilename, std::string buffer);
     bool IsFlag(char* bigstring);

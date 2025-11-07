@@ -122,12 +122,12 @@ void latex::write_timeline_tex()
 {
     std::string rawtext = R"(
 \section{Job Timeline}
-begin{longtable}{|p{0.3\textwidth}|p{0.3\textwidth}|p{0.3\textwidth}|}
+\begin{longtable}{|p{0.3\textwidth}|p{0.3\textwidth}|p{0.3\textwidth}|}
 \hline
 Stage & Date/Time & Job ID Number \\
 \hline
-Initialization & \texttt{)" + utils::GetTimeAndDate() + R"(} & \textbf{)" +  std::getenv("SLURM_JOB_ID") + R"( << "} \\
-\hline" << std::endl;
+Initialization & \texttt{)" + utils::GetTimeAndDate() + R"(} & \textbf{)" +  std::getenv("SLURM_JOB_ID") + R"(\\
+\hline
 )";
     utils::write_to_file("00_Report/timeline.tex",rawtext);
 }
@@ -138,9 +138,9 @@ void latex::write_initialize_tex(JobSettings settings)
 \subsection*{Job Settings}
 \noindent\begin{tabular}{|p{0.2\textwidth}|p{0.7\textwidth}|}
 \hline
-Input Topology: & \verb|)" + settings.PRMTOP + R"(\\
+Input Topology: & \verb|)" + settings.PRMTOP + R"(| \\
 \hline
-Input Coordinates: & \verb|)" + settings.INPCRD + R"(\\
+Input Coordinates: & \verb|)" + settings.INPCRD + R"(| \\
 \hline
 \end{tabular}
 
@@ -206,7 +206,11 @@ void latex::write_production_tex(JobSettings settings)
 \paragraph{}Production molecular dynamics will be run with a 1fs timestep for)" + std::to_string(settings.NUM_PROD_STEPS) 
 + R"(ns with periodic boundary conditions at constant volume (NVT ensemble).
 )";
-    std::string mmpbsa_text = R"(
+    
+    utils::write_to_file("00_Report/production.tex",rawtext);
+    if (settings.RUN_MMPBSA)
+    {
+        std::string mmpbsa_text = R"(
 \subsection{MMPBSA Calculations}
 \paragraph{} MMPBSA calculations will be performed alongside production.  These calculations are intended to calculate the binding energy for a given complex.
 
@@ -220,9 +224,6 @@ Complex mask:     & )" + settings.COMPLEX_MASK + R"( \\
 \hline
 \end{tabular}
 )";
-    utils::write_to_file("00_Report/production.tex",rawtext);
-    if (settings.RUN_MMPBSA)
-    {
         utils::append_to_file("00_Report/production.tex",mmpbsa_text);
     }
 }

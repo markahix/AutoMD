@@ -4,10 +4,11 @@ void write_mdin_cold_relax(JobSettings settings, double restraint_value)
 {
     unsigned int colpos = settings.COMPLEX_MASK.find(":");
     unsigned int dashpos = settings.COMPLEX_MASK.find("-");
+
     std::string startres,endres;
     if (dashpos != std::string::npos)
     {
-        startres = settings.COMPLEX_MASK.substr(colpos + 1, dashpos - colpos);
+        startres = settings.COMPLEX_MASK.substr(colpos + 1, dashpos - colpos - 1);
         endres = settings.COMPLEX_MASK.substr(dashpos + 1, settings.COMPLEX_MASK.length());
     }
     else
@@ -15,6 +16,10 @@ void write_mdin_cold_relax(JobSettings settings, double restraint_value)
         startres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
         endres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
     } 
+    std::stringstream res_val;
+    res_val.str("");
+    res_val << std::fixed << std::setprecision(2) << std::setfill('0') << restraint_value;
+
     std::string mdin_text = R"(Cold Density Equilibration
 &cntrl
   ntx      = 1,
@@ -40,11 +45,12 @@ void write_mdin_cold_relax(JobSettings settings, double restraint_value)
   cut      = 10.0,
    /
 Hold molecule fixed
-)" + std::to_string(restraint_value) + R"(
+)" + res_val.str() + R"(
 RES )" + startres + " " + endres + R"(
 END
 END
 )";
+    normal_log("Equilibrating solvent holding residues " + startres+ " to " + endres + " at restraint of " + res_val.str() + ".");
     utils::write_to_file("/tmp/mdin.in", mdin_text);
     return;
 }
@@ -57,6 +63,7 @@ void update_report()
     buffer << "Cold Density Equilibration & \\texttt{" << utils::GetTimeAndDate()<< "} & \\textbf{" << std::getenv("SLURM_JOB_ID") << "} \\\\" << std::endl;
     buffer << "\\hline" << std::endl;
     utils::append_to_file("00_Report/timeline.tex",buffer.str());
+    normal_log("Updated report with cold equilibration data.");
 }
 
 int GetStartBead()
@@ -69,7 +76,6 @@ int GetStartBead()
             startbead++;
         }
     }
-    
     return startbead;
 }
 
@@ -92,10 +98,8 @@ void cold_equil_loop(JobSettings settings, SlurmSettings slurm, int startbead, s
     double restraint_value;
     double rest_interval = settings.MAX_RESTRAINT / (settings.NUM_COLD_STEPS - 1);
     
-
     for (int i=startbead; i < settings.NUM_COLD_STEPS; i++)
     {
-        
         // set current restraint value
         restraint_value = settings.MAX_RESTRAINT - (i * rest_interval);
         if (restraint_value < 0.0)
@@ -108,6 +112,7 @@ void cold_equil_loop(JobSettings settings, SlurmSettings slurm, int startbead, s
         jobname.str("");
         jobname << "Cold_Equilibration_Step_" << i+1 << "_of_" << settings.NUM_COLD_STEPS;
         slurm::update_job_name(jobname.str());
+        normal_log("Cold Equilibration: Step " + std::to_string(i+1) + " of " + std::to_string(settings.NUM_COLD_STEPS));
         write_mdin_cold_relax(settings,restraint_value);
 
         // set filenames
@@ -118,6 +123,10 @@ void cold_equil_loop(JobSettings settings, SlurmSettings slurm, int startbead, s
         std::string mdout_file = filebasename + lead_zero_number.str() + ".out";
         std::string restart_file = filebasename + lead_zero_number.str() + ".rst7";
         std::string trajectory_file = filebasename + lead_zero_number.str() + ".mdcrd";
+        normal_log("MDIN:       " + mdin_file);
+        normal_log("MDOUT:      " + mdout_file);
+        normal_log("RESTART:    " + restart_file);
+        normal_log("TRAJECTORY: " + trajectory_file);
 
         // load amber module, then run Amber (pmemd.cuda)
         ambermachine::AmberLoop(slurm);
@@ -181,7 +190,7 @@ int main(int argc, char** argv)
     {
         error_log("Unable to locate pmemd.cuda.  Make sure you have provided the correct Amber module.",1);
     }
-    
+    normal_log("Located pmemd.cuda");
     // Variable Declarations.
     JobSettings settings;
     SlurmSettings slurm;
@@ -190,12 +199,14 @@ int main(int argc, char** argv)
     
     // Update report
     update_report();
-
+    normal_log("Updated report for cold equilibration job.");
+    
     // create 02_ColdDensityEquilibration directory.
-    fs::create_directory("02_ColdDensityEquilibration");
+    fs::create_directory("02_ColdDensityEquilibration/");
 
     //identify current bead
     int startbead = GetStartBead();
+    normal_log("Starting from bead " + std::to_string(startbead));
     
     // Ensure current.rst7 is the correct file.
     SetRestartFile(startbead);
@@ -203,6 +214,7 @@ int main(int argc, char** argv)
     // copy to /tmp
     fs::copy(settings.PRMTOP,"/tmp/job.prmtop");
     fs::copy("current_step.rst7","/tmp/last_step.rst7");
+    fs::copy(settings.INPCRD,"/tmp/start_coords.rst7");
 
     std::string csv_file = std::getenv("SLURM_SUBMIT_DIR");
     csv_file += "/06_Analysis/ColdEquil.csv";

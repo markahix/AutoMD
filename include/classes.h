@@ -32,6 +32,9 @@ class JobSettings
         int NUM_HOT_STEPS;
         int NUM_PROD_STEPS;
         bool COMPRESS_STAGES;
+
+        // Environment Settings
+        double TEMPERATURE;
         
         //MMPBSA settings
         bool RUN_MMPBSA;

@@ -41,7 +41,7 @@ namespace slurm
         else if (slurm.SLURM_exclude_nodes != " ")
             sys_command << " --exclude=" << slurm.SLURM_exclude_nodes;
         sys_command << " --mem=20GB";
-        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"" << slurm.SLURM_executable << " --initialize\"";
+        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"module load " << slurm.SLURM_amber_module << "; " << slurm.SLURM_executable << " --initialize\"";
         std::cout << sys_command.str() << std::endl;
         utils::silent_shell(sys_command.str().c_str());
     }
@@ -59,7 +59,7 @@ namespace slurm
         else if (slurm.SLURM_exclude_nodes != " ")
             sys_command << " --exclude=" << slurm.SLURM_exclude_nodes;
         sys_command << " --mem=20GB";
-        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"" << slurm.SLURM_executable << " --minimize\"";
+        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"module load " << slurm.SLURM_amber_module << "; " << slurm.SLURM_executable << " --minimize\"";
         std::cout << sys_command.str() << std::endl;
         utils::silent_shell(sys_command.str().c_str());
     }
@@ -77,7 +77,7 @@ namespace slurm
         else if (slurm.SLURM_exclude_nodes != " ")
             sys_command << " --exclude=" << slurm.SLURM_exclude_nodes;
         sys_command << " --mem=20GB";
-        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"" << slurm.SLURM_executable << " --coldrelax\"";
+        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"module load " << slurm.SLURM_amber_module << "; " << slurm.SLURM_executable << " --coldrelax\"";
         utils::silent_shell(sys_command.str().c_str());
 
     }
@@ -95,7 +95,7 @@ namespace slurm
         else if (slurm.SLURM_exclude_nodes != " ")
             sys_command << " --exclude=" << slurm.SLURM_exclude_nodes;
         sys_command << " --mem=20GB";
-        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"" << slurm.SLURM_executable << " --heating\"";
+        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"module load " << slurm.SLURM_amber_module << "; " << slurm.SLURM_executable << " --heating\"";
         utils::silent_shell(sys_command.str().c_str());
     }
 
@@ -112,7 +112,7 @@ namespace slurm
         else if (slurm.SLURM_exclude_nodes != " ")
             sys_command << " --exclude=" << slurm.SLURM_exclude_nodes;
         sys_command << " --mem=20GB";
-        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"" << slurm.SLURM_executable << " --hotrelax\"";
+        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"module load " << slurm.SLURM_amber_module << "; " << slurm.SLURM_executable << " --hotrelax\"";
         utils::silent_shell(sys_command.str().c_str());
     }
 
@@ -129,7 +129,7 @@ namespace slurm
         else if (slurm.SLURM_exclude_nodes != " ")
             sys_command << " --exclude=" << slurm.SLURM_exclude_nodes;
         sys_command << " --mem=20GB";
-        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"" << slurm.SLURM_executable << " --production\"";
+        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"module load " << slurm.SLURM_amber_module << "; " << slurm.SLURM_executable << " --production\"";
         utils::silent_shell(sys_command.str().c_str());
     }
 
@@ -141,7 +141,7 @@ namespace slurm
         sys_command << " -q primary";
         sys_command << " -t 5-0:00:00 -N 1 -n 20";
         sys_command << " --mem=20GB";
-        sys_command << " -o MMPBSA_%j.out -e MMPBSA_%j.err --wrap \"autommpbsa -s" << settings.PRMTOP << " -c MMPBSA_Inputs/complex.prmtop -r MMPBSA_Inputs/receptor.prmtop -l MMPBSA_Inputs/ligand.prmtop -m MMPBSA_Inputs/mmpbsa.in -t " << trajectory << "\"";
+        sys_command << " -o MMPBSA_%j.out -e MMPBSA_%j.err --wrap \"module load " << slurm.SLURM_amber_module << "; autommpbsa -s" << settings.PRMTOP << " -c MMPBSA_Inputs/complex.prmtop -r MMPBSA_Inputs/receptor.prmtop -l MMPBSA_Inputs/ligand.prmtop -m MMPBSA_Inputs/mmpbsa.in -t " << trajectory << "\"";
         std::string jobid = utils::GetSysResponse(sys_command.str().c_str());
         std::stringstream line;
         line.str(jobid);
@@ -163,7 +163,7 @@ namespace slurm
         sys_command << " -q primary";
         sys_command << " -t 5-0:00:00 -N 1 -n 1";
         sys_command << " --mem=5GB";
-        sys_command << " -o SASA_%j.out -e SASA_%j.err --wrap \"automd --sasa " << trajectory << "\"";
+        sys_command << " -o SASA_%j.out -e SASA_%j.err --wrap \"module load " << slurm.SLURM_amber_module << "; automd --sasa " << trajectory << "\"";
         std::string jobid = utils::GetSysResponse(sys_command.str().c_str());
         std::stringstream line;
         line.str(jobid);
@@ -191,7 +191,7 @@ namespace slurm
         else if (slurm.SLURM_exclude_nodes != " ")
             sys_command << " --exclude=" << slurm.SLURM_exclude_nodes;
         sys_command << " --mem=20GB";
-        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"" << slurm.SLURM_executable << " --analysis\"";
+        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"module load " << slurm.SLURM_amber_module << "; " << slurm.SLURM_executable << " --analysis\"";
         utils::silent_shell(sys_command.str().c_str());
     }
 
@@ -208,7 +208,7 @@ namespace slurm
         if (slurm.SLURM_exclude_nodes != " ")
             sys_command << " --exclude=" << slurm.SLURM_exclude_nodes;
         sys_command << " --mem=20GB";
-        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"" << slurm.SLURM_executable << " --report\"";
+        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"module load " << slurm.SLURM_amber_module << "; " << slurm.SLURM_executable << " --report\"";
         utils::silent_shell(sys_command.str().c_str());
 
     }

@@ -11,6 +11,11 @@ void error_log(std::string message,int exit_code)
     exit(exit_code);
 }
 
+void error_log(std::string message)
+{
+    std::cerr << message << std::endl;
+}
+
 void normal_log(std::string message)
 {
     std::cout << message << std::endl;
