@@ -2,6 +2,11 @@
 
 void write_mdin_heating(JobSettings settings)
 {
+    // Variables For Tuning
+    double temperature_interval = 10.0;
+    int heating_stage_interval_nsteps = 5000;
+
+
     unsigned int colpos = settings.COMPLEX_MASK.find(":");
     unsigned int dashpos = settings.COMPLEX_MASK.find("-");
     std::string startres,endres;
@@ -16,7 +21,6 @@ void write_mdin_heating(JobSettings settings)
         endres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
     } 
     std::string iterative_heating_section = "";
-    int heating_stage_interval_nsteps = 5000;
     int start_step = 0;
     int end_step = start_step + heating_stage_interval_nsteps;
     double start_temp = 0.0;
@@ -34,18 +38,42 @@ void write_mdin_heating(JobSettings settings)
         start_step = end_step + 1;
         end_step = end_step + heating_stage_interval_nsteps;
         start_temp = end_temp;
-        end_temp = end_temp + 10;
+        end_temp = end_temp + temperature_interval;
     }
+    while (end_temp > settings.TEMPERATURE)
+    {
+        start_temp = end_temp;
+        end_temp = end_temp - temperature_interval;
+        std::stringstream temp_line;
+        temp_line.str("");
+        temp_line << "&wt type='TEMP0', istep1=" << std::setw(5) << std::setfill('0') << start_step;
+        temp_line << ", istep2=" << std::setw(5) << std::setfill('0') << end_step;
+        temp_line << ", value1=" << std::fixed << std::setprecision(1) << start_temp;
+        temp_line << ", value2=" << std::fixed << std::setprecision(1) << end_temp;
+        temp_line << ",  &end" << std::endl;
+        iterative_heating_section += temp_line.str();
+        start_step = end_step + 1;
+        end_step = end_step + heating_stage_interval_nsteps;
+    }
+    end_step += 3*heating_stage_interval_nsteps;
+    std::stringstream temp_line;
+    temp_line.str("");
+    temp_line << "&wt type='TEMP0', istep1=" << std::setw(5) << std::setfill('0') << start_step;
+    temp_line << ", istep2=" << std::setw(5) << std::setfill('0') << end_step;
+    temp_line << ", value1=" << std::fixed << std::setprecision(1) << settings.TEMPERATURE;
+    temp_line << ", value2=" << std::fixed << std::setprecision(1) << settings.TEMPERATURE;
+    temp_line << ",  &end" << std::endl;
 
     std::string heat_script = R"(Heating
  &cntrl
   ntx      = 7,
+  ntxo     = 1,
   irest    = 1,
   nsnb     = 1,
   ntpr     = 100,
   ntwx     = 1000,
   ntwv     = 00,
-  nstlim   = )" + std::to_string(start_step-1) + R"(,
+  nstlim   = )" + std::to_string(end_step) + R"(,
   t        = 0.00,
   dt       = 0.00100,
   ntc      = 2,
@@ -150,11 +178,14 @@ void GeneratePlotsAndReport(FileList files)
 int main(int argc, char** argv)
 {
     // Make sure I can actually RUN the classical dynamics simulations.
-    if (! utils::CheckProgAvailable("$AMBERHOME/bin/pmemd.cuda"))
+    if (! utils::CheckProgAvailable("pmemd"))
     {
-        error_log("Unable to locate pmemd.cuda.  Make sure you have provided the correct Amber module.",1);
+        error_log("Unable to locate pmemd.  Make sure you have provided the correct Amber module.",1);
     }
-    
+    normal_log("Located pmemd at: ");
+    std::string pmemd_loc = utils::GetSysResponse("which pmemd");
+    normal_log("\t" + pmemd_loc);
+
     // Variable Declarations.
     JobSettings settings;
     SlurmSettings slurm;

@@ -41,12 +41,15 @@ void write_mdin_minimize(JobSettings settings)
   ntr    = 1,
   cut    = 10
    /
+END
+)";
+/*
 Hold molecule fixed
 )" + std::to_string(settings.MAX_RESTRAINT) + R"(
 RES )" + startres + " " + endres + R"(
 END
 END
-)";
+*/
     utils::write_to_file("01_Minimization/init.0000.in", mdin_text);
     return;
 }
@@ -54,11 +57,13 @@ END
 int main(int argc, char** argv)
 {
     // Make sure I can actually RUN the classical dynamics simulations.
-    if (!utils::CheckProgAvailable("pmemd.cuda"))
+    if (!utils::CheckProgAvailable("pmemd"))
     {
-        error_log("Unable to locate pmemd.cuda.  Make sure you have provided the correct Amber module.",1);
+        error_log("Unable to locate pmemd.  Make sure you have provided the correct Amber module.",1);
     }
-    normal_log("Located pmemd.cuda");
+    normal_log("Located pmemd at: ");
+    std::string pmemd_loc = utils::GetSysResponse("which pmemd");
+    normal_log("\t" + pmemd_loc);
     
     // Variable Declarations.
     JobSettings settings;

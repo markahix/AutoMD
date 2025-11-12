@@ -1,34 +1,48 @@
 #include "ambermachine.h"
 void write_mdin_hot_relax(JobSettings settings, double restraint_value)
 {
-    unsigned int colpos = settings.COMPLEX_MASK.find(":");
-    unsigned int dashpos = settings.COMPLEX_MASK.find("-");
+    // unsigned int colpos = settings.COMPLEX_MASK.find(":");
+    // unsigned int dashpos = settings.COMPLEX_MASK.find("-");
     std::string startres,endres;
-    if (dashpos != std::string::npos)
+    startres = utils::string_between(settings.COMPLEX_MASK, ":", "-");
+    if (settings.COMPLEX_MASK.find("-") != std::string::npos)
     {
-        startres = settings.COMPLEX_MASK.substr(colpos + 1, dashpos - colpos - 1);
-        endres = settings.COMPLEX_MASK.substr(dashpos + 1, settings.COMPLEX_MASK.length());
+        endres   = utils::string_between(settings.COMPLEX_MASK, "-","#");
     }
     else
     {
-        startres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
-        endres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
-    } 
+        endres = startres;
+    }
+    
+    // if (dashpos != std::string::npos)
+    // {
+    //     startres = settings.COMPLEX_MASK.substr(colpos + 1, dashpos - colpos - 1);
+    //     endres = settings.COMPLEX_MASK.substr(dashpos + 1, settings.COMPLEX_MASK.length());
+    // }
+    // else
+    // {
+    //     startres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
+    //     endres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
+    // } 
+    std::stringstream res_val;
+    res_val.str("");
+    res_val << std::fixed << std::setprecision(2) << std::setfill('0') << restraint_value;
     std::stringstream buffer;
     std::string heat_script = R"(
 Hot Density Equilibration
   &cntrl
   ntx      = 7, 
+  ntxo     = 1,
   irest    = 1,
   nsnb     = 1,
-  ntpr     = 1000, 
-  ntwx     = 1000, 
+  ntpr     = 100, 
+  ntwx     = 100, 
   ntwv     = 0,
   nstlim   = 1000, 
-  t        = 0.00, 
   dt       = 0.00100,
   ntc      = 2, 
-  ntf      = 1,
+  ntf      = 2,
+  barostat = 2,
   iwrap    = 1,
   ntb      = 2, 
   ntp      = 2,
@@ -42,7 +56,7 @@ Hot Density Equilibration
   vlimit   = -1,
  /
 Hold molecule fixed
-)" + std::to_string(restraint_value) + R"(
+)" + res_val.str() + R"(
 RES )" + startres + " " + endres + R"(
 END
 END
@@ -126,7 +140,15 @@ void hot_equil_loop(JobSettings settings, SlurmSettings slurm, int startbead, st
 
         // set filenames
         GenerateFileNames(files, filebasename, i+1);
-
+        std::string mdin_path_name = fs::path(files.GetFile("mdin")).filename();
+        std::string mdout_path_name = fs::path(files.GetFile("mdout")).filename();
+        std::string restart_path_name = fs::path(files.GetFile("restart")).filename();
+        std::string traj_path_name = fs::path(files.GetFile("trajectory")).filename();
+                
+        normal_log("MDIN:       " + mdin_path_name);
+        normal_log("MDOUT:      " + mdout_path_name);
+        normal_log("RESTART:    " + restart_path_name);
+        normal_log("TRAJECTORY: " + traj_path_name);
         // load amber module, then run Amber (pmemd.cuda)
         ambermachine::AmberLoop(slurm);
         ambermachine::AmberCopyBack(files.GetFile("mdin"),files.GetFile("restart"),files.GetFile("mdout"),files.GetFile("trajectory"),files.GetFile("csv"));
@@ -182,11 +204,13 @@ void GeneratePlotsAndReport(FileList files)
 int main(int argc, char** argv)
 {
     // Make sure I can actually RUN the classical dynamics simulations.
-    if (! utils::CheckProgAvailable("$AMBERHOME/bin/pmemd.cuda"))
+    if (! utils::CheckProgAvailable("pmemd"))
     {
-        error_log("Unable to locate pmemd.cuda.  Make sure you have provided the correct Amber module.",1);
+        error_log("Unable to locate pmemd.  Make sure you have provided the correct Amber module.",1);
     }
-    
+    normal_log("Located pmemd at: ");
+    std::string pmemd_loc = utils::GetSysResponse("which pmemd");
+    normal_log("\t" + pmemd_loc);
     // Variable Declarations.
     JobSettings settings;
     SlurmSettings slurm;

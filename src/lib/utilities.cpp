@@ -415,11 +415,10 @@ namespace utils
     std::string string_between(std::string incoming, std::string first_delim, std::string second_delim)
     {
         unsigned first = incoming.find(first_delim);
-        if (first == std::string::npos)
+        if (first != std::string::npos)
         {
-            return incoming;
-        }
-        incoming = incoming.substr(first+1,incoming.size() - first -1);
+            incoming = incoming.substr(first+1, incoming.size() - first - 1);
+        }        
 
         unsigned last = incoming.find(second_delim);
         if (last == std::string::npos)

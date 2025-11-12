@@ -2,37 +2,58 @@
 
 void write_mdin_cold_relax(JobSettings settings, double restraint_value)
 {
-    unsigned int colpos = settings.COMPLEX_MASK.find(":");
-    unsigned int dashpos = settings.COMPLEX_MASK.find("-");
-
+    // unsigned int colpos = settings.COMPLEX_MASK.find(":");
+    // unsigned int dashpos = settings.COMPLEX_MASK.find("-");
     std::string startres,endres;
-    if (dashpos != std::string::npos)
+    startres = utils::string_between(settings.COMPLEX_MASK, ":", "-");
+    if (settings.COMPLEX_MASK.find("-") != std::string::npos)
     {
-        startres = settings.COMPLEX_MASK.substr(colpos + 1, dashpos - colpos - 1);
-        endres = settings.COMPLEX_MASK.substr(dashpos + 1, settings.COMPLEX_MASK.length());
+        endres   = utils::string_between(settings.COMPLEX_MASK, "-","#");
     }
     else
     {
-        startres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
-        endres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
-    } 
+        endres = startres;
+    }
+    
+    // if (dashpos != std::string::npos)
+    // {
+    //     startres = settings.COMPLEX_MASK.substr(colpos + 1, dashpos - colpos - 1);
+    //     endres = settings.COMPLEX_MASK.substr(dashpos + 1, settings.COMPLEX_MASK.length());
+    // }
+    // else
+    // {
+    //     startres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
+    //     endres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
+    // } 
     std::stringstream res_val;
     res_val.str("");
     res_val << std::fixed << std::setprecision(2) << std::setfill('0') << restraint_value;
-
-    std::string mdin_text = R"(Cold Density Equilibration
+    std::string mdin_text = R"((Cold Density Equilibration
 &cntrl
-  ntx      = 1,
+)";
+    if (restraint_value == settings.MAX_RESTRAINT)
+    {
+       mdin_text += R"(  ntx      = 1,
   irest    = 0,
-  ntpr     = 5,
+)";
+    }
+    else
+    {
+         mdin_text += R"(  ntx      = 5,
+  irest    = 1,
+)";
+    }
+
+    mdin_text += R"(  ntpr     = 5,
+  ntxo     = 1,
   ntwx     = 100,
   ntwv     = 00,
   nstlim   = 1000,
-  t        = 0.00,
   dt       = 0.00100,
   ntc      = 2,
-  ntf      = 1,
+  ntf      = 2,
   ntb      = 2,
+  barostat = 2,
   ntp      = 2,
   iwrap    = 1,
   ig       = -1,
@@ -123,10 +144,16 @@ void cold_equil_loop(JobSettings settings, SlurmSettings slurm, int startbead, s
         std::string mdout_file = filebasename + lead_zero_number.str() + ".out";
         std::string restart_file = filebasename + lead_zero_number.str() + ".rst7";
         std::string trajectory_file = filebasename + lead_zero_number.str() + ".mdcrd";
-        normal_log("MDIN:       " + mdin_file);
-        normal_log("MDOUT:      " + mdout_file);
-        normal_log("RESTART:    " + restart_file);
-        normal_log("TRAJECTORY: " + trajectory_file);
+        
+        std::string mdin_path_name = fs::path(mdin_file).filename();
+        std::string mdout_path_name = fs::path(mdout_file).filename();
+        std::string restart_path_name = fs::path(restart_file).filename();
+        std::string traj_path_name = fs::path(trajectory_file).filename();
+                
+        normal_log("MDIN:       " + mdin_path_name);
+        normal_log("MDOUT:      " + mdout_path_name);
+        normal_log("RESTART:    " + restart_path_name);
+        normal_log("TRAJECTORY: " + traj_path_name);
 
         // load amber module, then run Amber (pmemd.cuda)
         ambermachine::AmberLoop(slurm);
@@ -186,11 +213,14 @@ void GenerateFiguresAndReport()
 int main(int argc, char** argv)
 {
     // Make sure I can actually RUN the classical dynamics simulations.
-    if (! utils::CheckProgAvailable("$AMBERHOME/bin/pmemd.cuda"))
+    if (! utils::CheckProgAvailable("pmemd"))
     {
-        error_log("Unable to locate pmemd.cuda.  Make sure you have provided the correct Amber module.",1);
+        error_log("Unable to locate pmemd.  Make sure you have provided the correct Amber module.",1);
     }
-    normal_log("Located pmemd.cuda");
+    normal_log("Located pmemd.cuda at: ");
+    std::string pmemd_loc = utils::GetSysResponse("which pmemd");
+    normal_log("\t" + pmemd_loc);
+    
     // Variable Declarations.
     JobSettings settings;
     SlurmSettings slurm;

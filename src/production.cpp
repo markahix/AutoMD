@@ -104,7 +104,7 @@ void ProductionLoop(JobSettings settings, SlurmSettings slurm, int startbead, st
 
         // load amber module, then run Amber (pmemd.cuda)
         std::cout << "DEBUG: In Production Function, slurm_amber_module is:  " << slurm.SLURM_amber_module << std::endl;
-        ambermachine::AmberLoop(slurm);
+        ambermachine::AmberLoopCUDA(slurm);
 
         // Error Check the output, terminate job if a step fails.
         std::ifstream outfile("mdout.out");
@@ -251,11 +251,13 @@ void CompressProductionFolder(JobSettings settings)
 int main(int argc, char** argv)
 {
     // Make sure I can actually RUN the classical dynamics simulations.
-    if (! utils::CheckProgAvailable("$AMBERHOME/bin/pmemd.cuda"))
+    if (! utils::CheckProgAvailable("pmemd.cuda"))
     {
         error_log("Unable to locate pmemd.cuda.  Make sure you have provided the correct Amber module.",1);
     }
-    
+    normal_log("Located pmemd.cuda at: ");
+    std::string pmemd_loc = utils::GetSysResponse("which pmemd");
+    normal_log("\t" + pmemd_loc);
     // Variable Declarations.
     JobSettings settings;
     SlurmSettings slurm;

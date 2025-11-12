@@ -253,6 +253,24 @@ slurm_amber_module Amber/20-cuda-11
 
         std::stringstream buffer;
         buffer.str("");
+        buffer << "pmemd -O";
+        buffer << " -i mdin.in";
+        buffer << " -o mdout.out";
+        buffer << " -p job.prmtop";
+        buffer << " -c last_step.rst7";
+        buffer << " -r current_step.rst7";
+        buffer << " -x trajectory.mdcrd";
+        buffer << " -ref start_coords.rst7";
+        utils::silent_shell(buffer.str().c_str());
+        fs::current_path(curr_path);
+    }
+    void AmberLoopCUDA(SlurmSettings slurm)
+    {
+        std::string curr_path = fs::current_path();
+        fs::current_path("/tmp/");
+
+        std::stringstream buffer;
+        buffer.str("");
         buffer << "pmemd.cuda -O";
         buffer << " -i mdin.in";
         buffer << " -o mdout.out";
@@ -299,7 +317,6 @@ slurm_amber_module Amber/20-cuda-11
         {
             fs::copy("mdout.out",mdout_file);
             fs::remove("mdout.out");
-            utils::mdout_to_csv(mdout_file,csv_file);
         }
         else
         {
@@ -323,6 +340,8 @@ slurm_amber_module Amber/20-cuda-11
         {
             error_log("Files were missing! Terminating.",1);
         }
+        utils::mdout_to_csv(mdout_file, csv_file);
+
         fs::current_path(curr_path);
 }
 }
