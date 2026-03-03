@@ -13,12 +13,12 @@ SlurmSettings::SlurmSettings()
         SLURM_JOB_ID = " ";
     }
     SLURM_JOBNAME = "AmberMachine";
-    SLURM_partition = "earwp";
-    SLURM_queue = "express";
-    SLURM_gpu = "gpu:1";
-    SLURM_nodelist = " ";
-    SLURM_exclude_nodes = " ";
-    SLURM_amber_module = "Amber/20-cuda-11";
+    SLURM_partition = SLURM_DEFAULT_GPU_JOB_PARTITION;
+    SLURM_queue = SLURM_DEFAULT_GPU_JOB_QUEUE;
+    SLURM_gpu = SLURM_DEFAULT_GPU_JOB_GPUNAME;
+    SLURM_nodelist = SLURM_DEFAULT_GPU_JOB_INCLUDE_NODES;
+    SLURM_exclude_nodes = SLURM_DEFAULT_GPU_JOB_EXCLUDE_NODES;
+    SLURM_amber_module = DEFAULT_AMBER_MODULE;
     SLURM_executable = "ambermachine";
 }
 
@@ -33,11 +33,12 @@ JobSettings::JobSettings()
     INPCRD = "file.rst7";
 
     // Job Settings
-    MAX_RESTRAINT = 500.00;
+    MAX_RESTRAINT    = 500.00;
     NUM_COLD_STEPS   = 10;
     NUM_HOT_STEPS    = 10;
     NUM_PROD_STEPS   = 100;
-    COMPRESS_STAGES = false;
+    FRAMES_PER_NS    = 1000;
+    COMPRESS_STAGES  = false;
 
     // Environmental Settings
     TEMPERATURE = 300;

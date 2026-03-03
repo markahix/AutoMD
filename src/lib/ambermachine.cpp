@@ -14,11 +14,12 @@ inpcrd             file.rst7
 #######################
 ##### Job Settings ####
 #######################
-restraint          500
-n_cold_steps       20
-n_hot_steps        20
+# restraint          500
+# n_cold_steps       20
+# n_hot_steps        20
 n_prod_steps       100
 compress_stages    True # Compress trajectory fragments for each stage into one file.
+frames_per_ns      1000
 
 #######################
 ##### Environment #####
@@ -53,12 +54,15 @@ slurm_queue        express
 slurm_gpu          gpu:nvidia_a30_1g.12gb:2
 slurm_nodelist     arw4,arw5  #delete if you don't care what nodes are used.
 slurm_exclude_nodes arw1,arw2,arw3  #delete if you don't care what nodes are used.
-slurm_amber_module Amber/20-cuda-11
+slurm_amber_module Amber/24
 
 %BEGIN_CPPTRAJ
 #Any additional or specific CPPTRAJ commands you want should go here.
 #It is assumed that they will be performed on the entire production MD trajectory
 %END_CPPTRAJ
+
+%BEGIN_SYSTEM_DETAILS
+%END_SYSTEM_DETAILS
 )";
         utils::write_to_file("amberinput.in",input_file);
     }
@@ -138,6 +142,11 @@ slurm_amber_module Amber/20-cuda-11
                 job_settings.NUM_HOT_STEPS = stoi(value);
             else if (setting == "n_prod_steps")
                 job_settings.NUM_PROD_STEPS = stoi(value);
+            else if (setting == "frames_per_ns")
+            {
+                job_settings.FRAMES_PER_NS = stoi(value);
+                job_settings.TRAJ_WRITE_FREQ = 1000000/stoi(value);
+            }
             else if (setting == "run_mmpbsa")
                 job_settings.RUN_MMPBSA = true;
             else if (setting == "receptor_mask")
@@ -178,11 +187,6 @@ slurm_amber_module Amber/20-cuda-11
                 slurm.SLURM_exclude_nodes = value;
         }
         file.close();
-
-        // std::cout << "DEBUG: slurm_nodelist = " << slurm.SLURM_nodelist << std::endl;
-        // std::cout << "DEBUG: slurm_exclude_nodes = " << slurm.SLURM_exclude_nodes << std::endl;
-        // std::cout << "DEBUG: slurm_amber_module = " << slurm.SLURM_amber_module << std::endl;
-
         return;
     }
 
@@ -198,30 +202,36 @@ slurm_amber_module Amber/20-cuda-11
             slurm::submit_initialize_job(settings,slurm);
             return;
         }
-        if ( !utils::CheckFileExists(".AMBER_MINIMIZE_COMPLETE") ) // amber_minimize.sh
+        if ( !utils::CheckFileExists(".AMBER_PREPRODUCTION_COMPLETE"))
         {
-            std::cout << "Submitting AmberMachine Minimization." << std::endl;
-            slurm::submit_minimize_job(settings,slurm);
+            std::cout << "Submitting AmberMachine Preproduction." << std::endl;
+            slurm::submit_preproduction_job(settings,slurm);
             return;
         }
-        if ( !utils::CheckFileExists(".AMBER_COLD_RELAX_COMPLETE") ) // amber_cold_relax.sh
-        {
-            std::cout << "Submitting AmberMachine Cold Relaxation." << std::endl;
-            slurm::submit_cold_equil_job(settings,slurm);
-            return;
-        }
-        if ( !utils::CheckFileExists(".AMBER_HEATING_COMPLETE") ) // amber_heating.sh
-        {
-            std::cout << "Submitting AmberMachine Heating." << std::endl;
-            slurm::submit_heating_job(settings,slurm);
-            return;
-        }
-        if ( !utils::CheckFileExists(".AMBER_HOT_RELAX_COMPLETE") ) // amber_hot_relax.sh
-        {
-            std::cout << "Submitting AmberMachine Hot Relaxation." << std::endl;
-            slurm::submit_hot_equil_job(settings,slurm);
-            return;
-        }
+        // if ( !utils::CheckFileExists(".AMBER_MINIMIZE_COMPLETE") ) // amber_minimize.sh
+        // {
+        //     std::cout << "Submitting AmberMachine Minimization." << std::endl;
+        //     slurm::submit_minimize_job(settings,slurm);
+        //     return;
+        // }
+        // if ( !utils::CheckFileExists(".AMBER_COLD_RELAX_COMPLETE") ) // amber_cold_relax.sh
+        // {
+        //     std::cout << "Submitting AmberMachine Cold Relaxation." << std::endl;
+        //     slurm::submit_cold_equil_job(settings,slurm);
+        //     return;
+        // }
+        // if ( !utils::CheckFileExists(".AMBER_HEATING_COMPLETE") ) // amber_heating.sh
+        // {
+        //     std::cout << "Submitting AmberMachine Heating." << std::endl;
+        //     slurm::submit_heating_job(settings,slurm);
+        //     return;
+        // }
+        // if ( !utils::CheckFileExists(".AMBER_HOT_RELAX_COMPLETE") ) // amber_hot_relax.sh
+        // {
+        //     std::cout << "Submitting AmberMachine Hot Relaxation." << std::endl;
+        //     slurm::submit_hot_equil_job(settings,slurm);
+        //     return;
+        // }
         if ( !utils::CheckFileExists(".AMBER_PRODUCTION_COMPLETE") ) // amber_production.sh
         {
             std::cout << "Submitting AmberMachine Production." << std::endl;

@@ -47,6 +47,26 @@ namespace slurm
         std::cout << sys_command.str() << std::endl;
         utils::silent_shell(sys_command.str().c_str());
     }
+    
+    void submit_preproduction_job(JobSettings settings, SlurmSettings slurm)
+    {
+        std::stringstream sys_command;
+        sys_command.str("");
+        sys_command << "sbatch -J AmberMachineMinimize -p " << slurm.SLURM_partition;
+        sys_command << " -q "<< slurm.SLURM_queue;
+        sys_command << " -t 24:00:00 -N 1 -n 1";
+        sys_command << " --gres=" << slurm.SLURM_gpu;
+        if (slurm.SLURM_nodelist != " ")
+            sys_command << " --nodelist=" << slurm.SLURM_nodelist;
+        else if (slurm.SLURM_exclude_nodes != " ")
+            sys_command << " --exclude=" << slurm.SLURM_exclude_nodes;
+        sys_command << " --mem=20GB";
+        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"";
+        sys_command << "module load " << slurm.SLURM_amber_module << "; ";
+        sys_command << slurm.SLURM_executable << " --preproduction\"";
+        std::cout << sys_command.str() << std::endl;
+        utils::silent_shell(sys_command.str().c_str());
+    }
 
     void submit_minimize_job(JobSettings settings, SlurmSettings slurm)
     {

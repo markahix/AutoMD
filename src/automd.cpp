@@ -71,58 +71,70 @@ int main(int argc, char **argv)
         {
             error_log("Failed to initialize simulation.  Please check error logs",1);
         }
-        slurm::submit_minimize_job(settings,slurm);
+        slurm::submit_preproduction_job(settings,slurm);
         slurm::cleanup_out_err(slurm);
         return 0;
     }
 
-    if (jobflag == "--minimize")
+    if (jobflag == "--preproduction")
     {
-        utils::silent_shell("automd_minimize 1> automd_minim.out 2> automd_minim.err");
-        if (!fs::exists(".AMBER_MINIMIZE_COMPLETE"))
+        utils::silent_shell("automd_preproduction 1> automd_preproduction.out 2> automd_preproduction.err");
+        if (!fs::exists(".AMBER_PREPRODUCTION_COMPLETE"))
         {
-            error_log("Failed to complete minimization.  Please check error logs",1);
-        }
-        slurm::submit_cold_equil_job(settings,slurm);
-        slurm::cleanup_out_err(slurm);
-        return 0;
-    }
-
-    if (jobflag == "--coldrelax")
-    {
-        utils::silent_shell("automd_coldequilibrate 1> automd_cold_eq.out 2> automd_cold_eq.err");
-        if (!fs::exists(".AMBER_COLD_RELAX_COMPLETE"))
-        {
-            error_log("Failed to complete cold density equilibration.  Please check error logs",1);
-        }
-        slurm::submit_heating_job(settings,slurm);
-        slurm::cleanup_out_err(slurm);
-        return 0;
-    }
-
-    if (jobflag == "--heating")
-    {
-        utils::silent_shell("automd_heating 1> automd_heating.out 2> automd_heating.err");
-        if (!fs::exists(".AMBER_HEATING_COMPLETE"))
-        {
-            error_log("Failed to complete heating.  Please check error logs",1);
-        }
-        slurm::submit_hot_equil_job(settings,slurm);
-        slurm::cleanup_out_err(slurm);
-        return 0;
-    }
-
-    if (jobflag == "--hotrelax")
-    {
-        utils::silent_shell("automd_hotequilibrate 1> automd_hot_eq.out 2> automd_hot_eq.err");
-        if (!fs::exists(".AMBER_HOT_RELAX_COMPLETE"))
-        {
-            error_log("Failed to complete hot density equilibration.  Please check error logs",1);
+            error_log("Failed to initialize simulation.  Please check error logs",1);
         }
         slurm::submit_production_job(settings,slurm);
-        slurm::cleanup_out_err(slurm);    
+        slurm::cleanup_out_err(slurm);
         return 0;
     }
+
+    // if (jobflag == "--minimize")
+    // {
+    //     utils::silent_shell("automd_minimize 1> automd_minim.out 2> automd_minim.err");
+    //     if (!fs::exists(".AMBER_MINIMIZE_COMPLETE"))
+    //     {
+    //         error_log("Failed to complete minimization.  Please check error logs",1);
+    //     }
+    //     slurm::submit_cold_equil_job(settings,slurm);
+    //     slurm::cleanup_out_err(slurm);
+    //     return 0;
+    // }
+
+    // if (jobflag == "--coldrelax")
+    // {
+    //     utils::silent_shell("automd_coldequilibrate 1> automd_cold_eq.out 2> automd_cold_eq.err");
+    //     if (!fs::exists(".AMBER_COLD_RELAX_COMPLETE"))
+    //     {
+    //         error_log("Failed to complete cold density equilibration.  Please check error logs",1);
+    //     }
+    //     slurm::submit_heating_job(settings,slurm);
+    //     slurm::cleanup_out_err(slurm);
+    //     return 0;
+    // }
+
+    // if (jobflag == "--heating")
+    // {
+    //     utils::silent_shell("automd_heating 1> automd_heating.out 2> automd_heating.err");
+    //     if (!fs::exists(".AMBER_HEATING_COMPLETE"))
+    //     {
+    //         error_log("Failed to complete heating.  Please check error logs",1);
+    //     }
+    //     slurm::submit_hot_equil_job(settings,slurm);
+    //     slurm::cleanup_out_err(slurm);
+    //     return 0;
+    // }
+
+    // if (jobflag == "--hotrelax")
+    // {
+    //     utils::silent_shell("automd_hotequilibrate 1> automd_hot_eq.out 2> automd_hot_eq.err");
+    //     if (!fs::exists(".AMBER_HOT_RELAX_COMPLETE"))
+    //     {
+    //         error_log("Failed to complete hot density equilibration.  Please check error logs",1);
+    //     }
+    //     slurm::submit_production_job(settings,slurm);
+    //     slurm::cleanup_out_err(slurm);    
+    //     return 0;
+    // }
 
     if (jobflag == "--production")
     {

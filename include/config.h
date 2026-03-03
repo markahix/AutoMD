@@ -3,18 +3,17 @@
 
 #define DEFAULT_TERACHEM_MODULE "Terachem/1.9.3-2023"
 #define DEFAULT_PDFLATEX_MODULE "texlive/2020"
-#define DEFAULT_AMBER_MODULE "Amber/20-cuda-11"
+#define DEFAULT_AMBER_MODULE "Amber/24"
 
 // SLURM GPU Job Settings
-#define SLURM_GPU_JOB_QUEUE "express"
-#define SLURM_GPU_JOB_PARTITION "earwp"
-#define SLURM_GPU_JOB_INCLUDE_NODES = "arw4,arw5"
-#define SLURM_GPU_JOB_EXCLUDE_NODES = "arw1,arw2,arw3"
-#define SLURM_GPU_JOB_GPUNAME = "gpu:nvidia_a30_1g.12gb:2"
-#define SLURM_GPU_JOB_MAX_MEMORY = "20GB"
+#define SLURM_DEFAULT_GPU_JOB_QUEUE "express"
+#define SLURM_DEFAULT_GPU_JOB_PARTITION "earwp"
+#define SLURM_DEFAULT_GPU_JOB_INCLUDE_NODES "arw1,arw2,arw3"
+#define SLURM_DEFAULT_GPU_JOB_EXCLUDE_NODES "arw4,arw5"
+#define SLURM_DEFAULT_GPU_JOB_GPUNAME "gpu:1"
+#define SLURM_DEFAULT_GPU_JOB_MAX_MEMORY "50GB"
 
 // SLURM CPU Job Settings
-#define SLURM_CPU_JOB_QUEUE "primary"
-
+#define SLURM_DEFAULT_CPU_JOB_QUEUE "primary"
 
 #endif

@@ -1,0 +1,27 @@
+// #include "utilities.h"
+
+
+/*
+This subprogram is meant to handle all the per-nanosecond analyses which can be done on a given system.  This is meant to streamline as much of the post-production analysis as possible by running time-dependent analysis like RMSD or distance/angle/dihedral metrics on each nanosecond file immediately as it completes, rather than waiting until the entire simulation has completed.  This will also allow ongoing, frequently-updated plots in the report file.
+
+Requirements (Minimum):
+    Arguments for prmtop, initial coordinates, and current trajectory.  The 'amberinput.in' file should hold the first two files already, and perhaps an update to the format there might be useful for the AGIMUS Overseer as well as the AutoMD submodules.
+*/
+
+// int main(int argc, char** argv)
+// {
+//     // Parse amberinput.in
+//         // Assign prmtop, inpcrd
+//         // Get listing of proteins, nucleics, ligands, solvents, etc. by residue masks
+//     // Parse command line arguments
+//         // Assign current_trajectory
+//     // Identify all possible time-dependent analyses
+//         // RMSD of entire system and any subsystems (monomers, subsections mentioned, etc.)
+//         // Any declared distances, angles, dihedrals/torsions to be measured
+//         // HBonds over time (uuseries, uvseries)
+//         // Radial Distribution Function for any/all ligands encountered.
+//     // Worth it to do non-time-dependent as well, so that we have average-over-time values anyway? Like correlated motion by nanosecond? Maybe.  Look back at this later.
+
+//     std::cout << "Hello World!" << std::endl;
+//     return 0;
+// }

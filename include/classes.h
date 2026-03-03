@@ -31,6 +31,8 @@ class JobSettings
         int NUM_COLD_STEPS;
         int NUM_HOT_STEPS;
         int NUM_PROD_STEPS;
+        int FRAMES_PER_NS;
+        int TRAJ_WRITE_FREQ;
         bool COMPRESS_STAGES;
 
         // Environment Settings

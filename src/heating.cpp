@@ -1,267 +1,267 @@
-#include "ambermachine.h"
+// #include "ambermachine.h"
 
-void write_mdin_heating(JobSettings settings)
-{
-    // Variables For Tuning
-    double temperature_interval = 10.0;
-    int heating_stage_interval_nsteps = 5000;
+// void write_mdin_heating(JobSettings settings)
+// {
+//     // Variables For Tuning
+//     double temperature_interval = 10.0;
+//     int heating_stage_interval_nsteps = 5000;
 
 
-    unsigned int colpos = settings.COMPLEX_MASK.find(":");
-    unsigned int dashpos = settings.COMPLEX_MASK.find("-");
-    std::string startres,endres;
-    if (dashpos != std::string::npos)
-    {
-        startres = settings.COMPLEX_MASK.substr(colpos + 1, dashpos - colpos);
-        endres = settings.COMPLEX_MASK.substr(dashpos + 1, settings.COMPLEX_MASK.length());
-    }
-    else
-    {
-        startres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
-        endres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
-    } 
-    std::string iterative_heating_section = "";
-    int start_step = 0;
-    int end_step = start_step + heating_stage_interval_nsteps;
-    double start_temp = 0.0;
-    double end_temp = 10.0;
-    while (start_temp <= settings.TEMPERATURE + 20.0)
-    {
-        std::stringstream temp_line;
-        temp_line.str("");
-        temp_line << "&wt type='TEMP0', istep1=" << std::setw(5) << std::setfill('0') << start_step;
-        temp_line << ", istep2=" << std::setw(5) << std::setfill('0') << end_step;
-        temp_line << ", value1=" << std::fixed << std::setprecision(1) << start_temp;
-        temp_line << ", value2=" << std::fixed << std::setprecision(1) << end_temp;
-        temp_line << ",  &end" << std::endl;
-        iterative_heating_section += temp_line.str();
-        start_step = end_step + 1;
-        end_step = end_step + heating_stage_interval_nsteps;
-        start_temp = end_temp;
-        end_temp = end_temp + temperature_interval;
-    }
-    while (end_temp > settings.TEMPERATURE)
-    {
-        start_temp = end_temp;
-        end_temp = end_temp - temperature_interval;
-        std::stringstream temp_line;
-        temp_line.str("");
-        temp_line << "&wt type='TEMP0', istep1=" << std::setw(5) << std::setfill('0') << start_step;
-        temp_line << ", istep2=" << std::setw(5) << std::setfill('0') << end_step;
-        temp_line << ", value1=" << std::fixed << std::setprecision(1) << start_temp;
-        temp_line << ", value2=" << std::fixed << std::setprecision(1) << end_temp;
-        temp_line << ",  &end" << std::endl;
-        iterative_heating_section += temp_line.str();
-        start_step = end_step + 1;
-        end_step = end_step + heating_stage_interval_nsteps;
-    }
-    end_step += 3*heating_stage_interval_nsteps;
-    std::stringstream temp_line;
-    temp_line.str("");
-    temp_line << "&wt type='TEMP0', istep1=" << std::setw(5) << std::setfill('0') << start_step;
-    temp_line << ", istep2=" << std::setw(5) << std::setfill('0') << end_step;
-    temp_line << ", value1=" << std::fixed << std::setprecision(1) << settings.TEMPERATURE;
-    temp_line << ", value2=" << std::fixed << std::setprecision(1) << settings.TEMPERATURE;
-    temp_line << ",  &end" << std::endl;
+//     unsigned int colpos = settings.COMPLEX_MASK.find(":");
+//     unsigned int dashpos = settings.COMPLEX_MASK.find("-");
+//     std::string startres,endres;
+//     if (dashpos != std::string::npos)
+//     {
+//         startres = settings.COMPLEX_MASK.substr(colpos + 1, dashpos - colpos);
+//         endres = settings.COMPLEX_MASK.substr(dashpos + 1, settings.COMPLEX_MASK.length());
+//     }
+//     else
+//     {
+//         startres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
+//         endres = settings.COMPLEX_MASK.substr(colpos + 1, settings.COMPLEX_MASK.length());
+//     } 
+//     std::string iterative_heating_section = "";
+//     int start_step = 0;
+//     int end_step = start_step + heating_stage_interval_nsteps;
+//     double start_temp = 0.0;
+//     double end_temp = 10.0;
+//     while (start_temp <= settings.TEMPERATURE + 20.0)
+//     {
+//         std::stringstream temp_line;
+//         temp_line.str("");
+//         temp_line << "&wt type='TEMP0', istep1=" << std::setw(5) << std::setfill('0') << start_step;
+//         temp_line << ", istep2=" << std::setw(5) << std::setfill('0') << end_step;
+//         temp_line << ", value1=" << std::fixed << std::setprecision(1) << start_temp;
+//         temp_line << ", value2=" << std::fixed << std::setprecision(1) << end_temp;
+//         temp_line << ",  &end" << std::endl;
+//         iterative_heating_section += temp_line.str();
+//         start_step = end_step + 1;
+//         end_step = end_step + heating_stage_interval_nsteps;
+//         start_temp = end_temp;
+//         end_temp = end_temp + temperature_interval;
+//     }
+//     while (end_temp > settings.TEMPERATURE)
+//     {
+//         start_temp = end_temp;
+//         end_temp = end_temp - temperature_interval;
+//         std::stringstream temp_line;
+//         temp_line.str("");
+//         temp_line << "&wt type='TEMP0', istep1=" << std::setw(5) << std::setfill('0') << start_step;
+//         temp_line << ", istep2=" << std::setw(5) << std::setfill('0') << end_step;
+//         temp_line << ", value1=" << std::fixed << std::setprecision(1) << start_temp;
+//         temp_line << ", value2=" << std::fixed << std::setprecision(1) << end_temp;
+//         temp_line << ",  &end" << std::endl;
+//         iterative_heating_section += temp_line.str();
+//         start_step = end_step + 1;
+//         end_step = end_step + heating_stage_interval_nsteps;
+//     }
+//     end_step += 3*heating_stage_interval_nsteps;
+//     std::stringstream temp_line;
+//     temp_line.str("");
+//     temp_line << "&wt type='TEMP0', istep1=" << std::setw(5) << std::setfill('0') << start_step;
+//     temp_line << ", istep2=" << std::setw(5) << std::setfill('0') << end_step;
+//     temp_line << ", value1=" << std::fixed << std::setprecision(1) << settings.TEMPERATURE;
+//     temp_line << ", value2=" << std::fixed << std::setprecision(1) << settings.TEMPERATURE;
+//     temp_line << ",  &end" << std::endl;
 
-    std::string heat_script = R"(Heating
- &cntrl
-  ntx      = 7,
-  ntxo     = 1,
-  irest    = 1,
-  nsnb     = 1,
-  ntpr     = 100,
-  ntwx     = 1000,
-  ntwv     = 00,
-  nstlim   = )" + std::to_string(end_step) + R"(,
-  t        = 0.00,
-  dt       = 0.00100,
-  ntc      = 2,
-  ntf      = 1,
-  ntb      = 1,
-  iwrap    = 1,
-  ntt      = 3, 
-  temp0    = 010.0, 
-  tempi    = 010.0, 
-  tautp    = 1.0, 
-  gamma_ln = 5.0,
-  ntr      = 1,
-  cut      = 10.0,
-  nmropt   = 1 
- /
-)" + iterative_heating_section + R"( &wt type='END'  &end
-Hold molecule fixed
-)" + std::to_string(settings.MAX_RESTRAINT) + R"(
-RES )" + startres + " " + endres + R"(
-END
-END
-)";
-    utils::write_to_file("mdin.in",heat_script);
-    return;
-}
+//     std::string heat_script = R"(Heating
+//  &cntrl
+//   ntx      = 7,
+//   ntxo     = 1,
+//   irest    = 1,
+//   nsnb     = 1,
+//   ntpr     = 100,
+//   ntwx     = 1000,
+//   ntwv     = 00,
+//   nstlim   = )" + std::to_string(end_step) + R"(,
+//   t        = 0.00,
+//   dt       = 0.00100,
+//   ntc      = 2,
+//   ntf      = 1,
+//   ntb      = 1,
+//   iwrap    = 1,
+//   ntt      = 3, 
+//   temp0    = 010.0, 
+//   tempi    = 010.0, 
+//   tautp    = 1.0, 
+//   gamma_ln = 5.0,
+//   ntr      = 1,
+//   cut      = 10.0,
+//   nmropt   = 1 
+//  /
+// )" + iterative_heating_section + R"( &wt type='END'  &end
+// Hold molecule fixed
+// )" + std::to_string(settings.MAX_RESTRAINT) + R"(
+// RES )" + startres + " " + endres + R"(
+// END
+// END
+// )";
+//     utils::write_to_file("mdin.in",heat_script);
+//     return;
+// }
 
-void UpdateReport()
-{
-slurm::update_job_name("Updating_Report_Timeline");
-    std::stringstream buffer;
-    buffer.str("");
-    buffer << "Iterative Heating & \\texttt{" << utils::GetTimeAndDate()<< "} & \\textbf{" << std::getenv("SLURM_JOB_ID") << "} \\\\" << std::endl;
-    buffer << "\\hline" << std::endl;
-    utils::append_to_file("00_Report/timeline.tex",buffer.str());
+// void UpdateReport()
+// {
+// slurm::update_job_name("Updating_Report_Timeline");
+//     std::stringstream buffer;
+//     buffer.str("");
+//     buffer << "Iterative Heating & \\texttt{" << utils::GetTimeAndDate()<< "} & \\textbf{" << std::getenv("SLURM_JOB_ID") << "} \\\\" << std::endl;
+//     buffer << "\\hline" << std::endl;
+//     utils::append_to_file("00_Report/timeline.tex",buffer.str());
 
-}
+// }
 
-void GenerateFileNames(FileList &files, int step_num)
-{
-    std::stringstream lead_zero_number;
-    lead_zero_number.str("");
-    lead_zero_number << std::setw(4) << std::setfill('0') << step_num;
-    std::string filebase = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/03_Heating/heating." + lead_zero_number.str();
-    files.AddFile("mdin",filebase + ".in");
-    files.AddFile("mdout",filebase + ".out");
-    files.AddFile("restart",filebase + ".rst7");
-    files.AddFile("trajectory",filebase + ".mdcrd");
+// void GenerateFileNames(FileList &files, int step_num)
+// {
+//     std::stringstream lead_zero_number;
+//     lead_zero_number.str("");
+//     lead_zero_number << std::setw(4) << std::setfill('0') << step_num;
+//     std::string filebase = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/03_Heating/heating." + lead_zero_number.str();
+//     files.AddFile("mdin",filebase + ".in");
+//     files.AddFile("mdout",filebase + ".out");
+//     files.AddFile("restart",filebase + ".rst7");
+//     files.AddFile("trajectory",filebase + ".mdcrd");
     
-    std::string csv_file = std::getenv("SLURM_SUBMIT_DIR");
-    csv_file += "/06_Analysis/Heating.csv";
-    files.AddFile("csv",csv_file);
-}
+//     std::string csv_file = std::getenv("SLURM_SUBMIT_DIR");
+//     csv_file += "/06_Analysis/Heating.csv";
+//     files.AddFile("csv",csv_file);
+// }
 
-void GeneratePlotsAndReport(FileList files)
-{
-// Plot the Heating.csv using python ... 
-    slurm::update_job_name("Generating_Plots_Heating");
-    python::plot_csv_data(files.GetFile("csv"));
+// void GeneratePlotsAndReport(FileList files)
+// {
+// // Plot the Heating.csv using python ... 
+//     slurm::update_job_name("Generating_Plots_Heating");
+//     python::plot_csv_data(files.GetFile("csv"));
 
-    // Update report with completed heating figures, checking if each one exists as we go.
-    if (fs::exists("00_Report/Heating_Figure_01.png"))
-    {
-    std::string report_update = R"LATEX(
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=0.9\textwidth]{Heating_Figure_01.png}
-\caption{Temperature (K), pressure (bar), volume ($\AA$), and density ($g\cdot mL^{-1}$) during iterative heating stage.}
-\label{fig:heating_fig_01}
-\end{figure}
+//     // Update report with completed heating figures, checking if each one exists as we go.
+//     if (fs::exists("00_Report/Heating_Figure_01.png"))
+//     {
+//     std::string report_update = R"LATEX(
+// \begin{figure}[!htbp]
+// \centering
+// \includegraphics[width=0.9\textwidth]{Heating_Figure_01.png}
+// \caption{Temperature (K), pressure (bar), volume ($\AA$), and density ($g\cdot mL^{-1}$) during iterative heating stage.}
+// \label{fig:heating_fig_01}
+// \end{figure}
 
-)LATEX";
-    utils::append_to_file("00_Report/heating.tex",report_update);
-    }
-    if (fs::exists("00_Report/Heating_Figure_02.png"))
-    {
-    std::string report_update = R"LATEX(
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=0.9\textwidth]{Heating_Figure_02.png}
-\caption{Total, kinetic, and potential energies ($kcal\cdot mol^{-1}$) during iterative heating stage.}
-\label{fig:heating_fig_02}
-\end{figure}
+// )LATEX";
+//     utils::append_to_file("00_Report/heating.tex",report_update);
+//     }
+//     if (fs::exists("00_Report/Heating_Figure_02.png"))
+//     {
+//     std::string report_update = R"LATEX(
+// \begin{figure}[!htbp]
+// \centering
+// \includegraphics[width=0.9\textwidth]{Heating_Figure_02.png}
+// \caption{Total, kinetic, and potential energies ($kcal\cdot mol^{-1}$) during iterative heating stage.}
+// \label{fig:heating_fig_02}
+// \end{figure}
 
-)LATEX";
-    utils::append_to_file("00_Report/heating.tex",report_update);
-    }
-    if (fs::exists("00_Report/Heating_Figure_03.png"))
-    {
-    std::string report_update = R"LATEX(
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=0.9\textwidth]{Heating_Figure_03.png}
-\caption{Bond, angle, dihedral, van der Waals, and electrostatic energies ($kcal\cdot mol^{-1}$) during iterative heating stage.}
-\label{fig:heating_fig_03}
-\end{figure}
+// )LATEX";
+//     utils::append_to_file("00_Report/heating.tex",report_update);
+//     }
+//     if (fs::exists("00_Report/Heating_Figure_03.png"))
+//     {
+//     std::string report_update = R"LATEX(
+// \begin{figure}[!htbp]
+// \centering
+// \includegraphics[width=0.9\textwidth]{Heating_Figure_03.png}
+// \caption{Bond, angle, dihedral, van der Waals, and electrostatic energies ($kcal\cdot mol^{-1}$) during iterative heating stage.}
+// \label{fig:heating_fig_03}
+// \end{figure}
 
-)LATEX";
-    utils::append_to_file("00_Report/heating.tex",report_update);
-    }
-}
+// )LATEX";
+//     utils::append_to_file("00_Report/heating.tex",report_update);
+//     }
+// }
 
-int main(int argc, char** argv)
-{
-    // Make sure I can actually RUN the classical dynamics simulations.
-    if (! utils::CheckProgAvailable("pmemd"))
-    {
-        error_log("Unable to locate pmemd.  Make sure you have provided the correct Amber module.",1);
-    }
-    normal_log("Located pmemd at: ");
-    std::string pmemd_loc = utils::GetSysResponse("which pmemd");
-    normal_log("\t" + pmemd_loc);
+// int main(int argc, char** argv)
+// {
+//     // Make sure I can actually RUN the classical dynamics simulations.
+//     if (! utils::CheckProgAvailable("pmemd"))
+//     {
+//         error_log("Unable to locate pmemd.  Make sure you have provided the correct Amber module.",1);
+//     }
+//     normal_log("Located pmemd at: ");
+//     std::string pmemd_loc = utils::GetSysResponse("which pmemd");
+//     normal_log("\t" + pmemd_loc);
 
-    // Variable Declarations.
-    JobSettings settings;
-    SlurmSettings slurm;
-    slurm.SLURM_executable = argv[0];
-    FileList files;
-    ambermachine::read_amberinput(settings,slurm);
+//     // Variable Declarations.
+//     JobSettings settings;
+//     SlurmSettings slurm;
+//     slurm.SLURM_executable = argv[0];
+//     FileList files;
+//     ambermachine::read_amberinput(settings,slurm);
 
-    // Update report
-    UpdateReport();
+//     // Update report
+//     UpdateReport();
 
-    // create job subdirectory.
-    fs::create_directory("03_Heating");
+//     // create job subdirectory.
+//     fs::create_directory("03_Heating");
 
-    // copy to /tmp
-    fs::copy(settings.PRMTOP,"/tmp/job.prmtop");
-    fs::copy("current_step.rst7","/tmp/last_step.rst7");
-    fs::copy(settings.INPCRD,"/tmp/start_coords.rst7");
+//     // copy to /tmp
+//     fs::copy(settings.PRMTOP,"/tmp/job.prmtop");
+//     fs::copy("current_step.rst7","/tmp/last_step.rst7");
+//     fs::copy(settings.INPCRD,"/tmp/start_coords.rst7");
 
-    // change directory to /tmp
-    fs::current_path("/tmp/");
-    write_mdin_heating(settings);
+//     // change directory to /tmp
+//     fs::current_path("/tmp/");
+//     write_mdin_heating(settings);
 
-    // define necessary filenames
-    GenerateFileNames(files, settings.NUM_COLD_STEPS + 1);
-    std::stringstream lead_zero_number;
+//     // define necessary filenames
+//     GenerateFileNames(files, settings.NUM_COLD_STEPS + 1);
+//     std::stringstream lead_zero_number;
 
-    // Run Amber Job
-    slurm::update_job_name("Performing_Iterative_Heating");
+//     // Run Amber Job
+//     slurm::update_job_name("Performing_Iterative_Heating");
 
-    std::stringstream buffer;
-    buffer.str("");
-    buffer << "module load " << slurm.SLURM_amber_module << "; ";
-    buffer << "$AMBERHOME/bin/pmemd.cuda -O -i mdin.in -o mdout.out -p job.prmtop -c last_step.rst7 -r current_step.rst7 -x trajectory.mdcrd -ref last_step.rst7";
-    utils::silent_shell(buffer.str().c_str());
+//     std::stringstream buffer;
+//     buffer.str("");
+//     buffer << "module load " << slurm.SLURM_amber_module << "; ";
+//     buffer << "$AMBERHOME/bin/pmemd.cuda -O -i mdin.in -o mdout.out -p job.prmtop -c last_step.rst7 -r current_step.rst7 -x trajectory.mdcrd -ref last_step.rst7";
+//     utils::silent_shell(buffer.str().c_str());
 
-    // copy back from /tmp
-    fs::copy("mdin.in",files.GetFile("mdin"));
-    fs::remove("mdin.in");
+//     // copy back from /tmp
+//     fs::copy("mdin.in",files.GetFile("mdin"));
+//     fs::remove("mdin.in");
 
-    fs::copy("current_step.rst7",files.GetFile("restart"));
-    fs::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",fs::copy_options::update_existing);
+//     fs::copy("current_step.rst7",files.GetFile("restart"));
+//     fs::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",fs::copy_options::update_existing);
     
-    fs::copy("current_step.rst7","last_step.rst7",fs::copy_options::update_existing);
-    fs::remove("current_step.rst7");
+//     fs::copy("current_step.rst7","last_step.rst7",fs::copy_options::update_existing);
+//     fs::remove("current_step.rst7");
 
-    fs::copy("mdout.out",files.GetFile("mdout"));
-    fs::remove("mdout.out");
+//     fs::copy("mdout.out",files.GetFile("mdout"));
+//     fs::remove("mdout.out");
     
-    fs::copy("trajectory.mdcrd",files.GetFile("trajectory"));
-    fs::remove("trajectory.mdcrd");
+//     fs::copy("trajectory.mdcrd",files.GetFile("trajectory"));
+//     fs::remove("trajectory.mdcrd");
 
-    if (fs::exists("mdinfo"))
-    {
-        fs::remove("mdinfo");
-    }
+//     if (fs::exists("mdinfo"))
+//     {
+//         fs::remove("mdinfo");
+//     }
 
-    // return to original directory when finished in /tmp
-    fs::current_path(std::getenv("SLURM_SUBMIT_DIR"));
+//     // return to original directory when finished in /tmp
+//     fs::current_path(std::getenv("SLURM_SUBMIT_DIR"));
 
-    // Parse output to CSV file.
-    utils::mdout_to_csv(files.GetFile("mdout"),files.GetFile("csv"));
+//     // Parse output to CSV file.
+//     utils::mdout_to_csv(files.GetFile("mdout"),files.GetFile("csv"));
 
-    // Generate Plots and Update Report
-    GeneratePlotsAndReport(files);    
+//     // Generate Plots and Update Report
+//     GeneratePlotsAndReport(files);    
 
-    // Compress 03_Heating/ to 03_Heating.tar.gz, then remove the folder
-    utils::compress_and_delete("03_Heating");
+//     // Compress 03_Heating/ to 03_Heating.tar.gz, then remove the folder
+//     utils::compress_and_delete("03_Heating");
     
-    // Complete minimization job stage
-    slurm::update_job_name("Completing_Iterative_Heating");
+//     // Complete minimization job stage
+//     slurm::update_job_name("Completing_Iterative_Heating");
     
-    // Compile Current Report
-    latex::compile_report(settings);
+//     // Compile Current Report
+//     latex::compile_report(settings);
     
-    // Create .AMBER_HEATING_COMPLETE
-    utils::write_to_file(".AMBER_HEATING_COMPLETE","");
+//     // Create .AMBER_HEATING_COMPLETE
+//     utils::write_to_file(".AMBER_HEATING_COMPLETE","");
     
-    return 0;
-}
+//     return 0;
+// }

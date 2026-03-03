@@ -11,7 +11,7 @@ LIB_SRC := $(wildcard $(SRC_DIR)/lib/*.cpp)
 OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 LIB_OBJ := $(LIB_SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-EXECUTABLES := $(BIN_DIR)/automd $(BIN_DIR)/automd_initialize $(BIN_DIR)/automd_coldequilibrate $(BIN_DIR)/automd_heating $(BIN_DIR)/automd_minimize $(BIN_DIR)/automd_hotequilibrate $(BIN_DIR)/automd_production
+EXECUTABLES := $(BIN_DIR)/automd $(BIN_DIR)/automd_production $(BIN_DIR)/automd_preproduction $(BIN_DIR)/automd_initialize #$(BIN_DIR)/automd_coldequilibrate $(BIN_DIR)/automd_heating $(BIN_DIR)/automd_minimize $(BIN_DIR)/automd_hotequilibrate 
 
 CPPFLAGS := -Iinclude -MMD -MP
 CFLAGS   := -Wall
@@ -28,19 +28,22 @@ $(BIN_DIR)/automd: $(OBJ_DIR)/automd.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
 $(BIN_DIR)/automd_initialize: $(OBJ_DIR)/initialize.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-$(BIN_DIR)/automd_coldequilibrate: $(OBJ_DIR)/coldequilibrate.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+# $(BIN_DIR)/automd_coldequilibrate: $(OBJ_DIR)/coldequilibrate.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
+# 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-$(BIN_DIR)/automd_heating: $(OBJ_DIR)/heating.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+# $(BIN_DIR)/automd_heating: $(OBJ_DIR)/heating.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
+# 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-$(BIN_DIR)/automd_minimize: $(OBJ_DIR)/minimize.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+# $(BIN_DIR)/automd_minimize: $(OBJ_DIR)/minimize.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
+# 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-$(BIN_DIR)/automd_hotequilibrate: $(OBJ_DIR)/hotequilibrate.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+# $(BIN_DIR)/automd_hotequilibrate: $(OBJ_DIR)/hotequilibrate.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
+# 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 $(BIN_DIR)/automd_production: $(OBJ_DIR)/production.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	
+$(BIN_DIR)/automd_preproduction: $(OBJ_DIR)/preproduction.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 $(LIB_OBJ_DIR)/%.o: $(SRC_DIR)/lib/%.cpp | $(LIB_OBJ_DIR)
