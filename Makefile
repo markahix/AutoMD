@@ -5,6 +5,7 @@ OBJ_DIR := obj
 LIB_OBJ_DIR := $(OBJ_DIR)/lib
 BIN_DIR := bin
 INS_DIR := ~/bin
+AGIMUS_BIN_DIR := ../bin
 
 SRC := $(wildcard $(SRC_DIR)/*.cpp)
 LIB_SRC := $(wildcard $(SRC_DIR)/lib/*.cpp)
@@ -58,4 +59,9 @@ $(BIN_DIR) $(OBJ_DIR) $(LIB_OBJ_DIR):
 clean:
 	@$(RM) -rv $(BIN_DIR) $(OBJ_DIR)
 
+install: 
+	cp $(EXECUTABLES) $(INS_DIR)
+	cp $(EXECUTABLES) $(AGIMUS_BIN_DIR)
+
 -include $(OBJ:.o=.d)
+
