@@ -42,11 +42,40 @@ namespace ambermachine
         sasa_dat += "/SASA.dat";
         if (!fs::exists(sasa_dat))
         {
-            utils::write_to_file(sasa_dat,"#Frame    Receptor    Ligand  Complex\n");
+            buffer.str("");
+            buffer << std::setw(14) << "TimeIndex";
+            buffer << std::setw(14) << "Receptor";
+            buffer << std::setw(14) << "Ligand";
+            buffer << std::setw(14) << "Complex";
+            buffer << std::endl;
+
+            utils::write_to_file(sasa_dat,buffer.str());
         }
-        buffer.str("");
-        buffer << "tail -n +2 molsurf.dat >> " << sasa_dat;
-        utils::silent_shell(buffer.str().c_str());
+        
+        double basetimevalue = stoi(trajectory.substr(5,4));
+        std::string line;
+        std::ifstream ifile("molsurf.dat",std::ios::in);
+        getline(ifile,line);
+        getline(ifile,line);
+        double time, receptor, ligand, complex;
+        while (getline(ifile,line))
+        {
+            std::stringstream dummy;
+            dummy.str(line);
+            dummy >> time >> receptor >> ligand >> complex;
+            time = time/settings.FRAMES_PER_NS;
+            time +=(basetimevalue - 1);
+            buffer << std::setw(14) << time;
+            buffer << std::setw(14) << receptor;
+            buffer << std::setw(14) << ligand;
+            buffer << std::setw(14) << complex;
+            buffer << std::endl;
+        }
+        
+        utils::append_to_file(sasa_dat, buffer.str());
+        // buffer.str("");
+        // buffer << "tail -n +2 molsurf.dat >> " << sasa_dat;
+        // utils::silent_shell(buffer.str().c_str());
 
         slurm::remove_dependency_from_list(slurm);
         // remove SASA_*.*

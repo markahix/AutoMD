@@ -28,18 +28,6 @@ $(BIN_DIR)/automd: $(OBJ_DIR)/automd.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
 $(BIN_DIR)/automd_initialize: $(OBJ_DIR)/initialize.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-# $(BIN_DIR)/automd_coldequilibrate: $(OBJ_DIR)/coldequilibrate.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
-# 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
-
-# $(BIN_DIR)/automd_heating: $(OBJ_DIR)/heating.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
-# 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
-
-# $(BIN_DIR)/automd_minimize: $(OBJ_DIR)/minimize.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
-# 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
-
-# $(BIN_DIR)/automd_hotequilibrate: $(OBJ_DIR)/hotequilibrate.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
-# 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
-
 $(BIN_DIR)/automd_production: $(OBJ_DIR)/production.o $(LIB_OBJ) | $(BIN_DIR) $(LIB_OBJ_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 	

@@ -14,9 +14,6 @@ inpcrd             file.rst7
 #######################
 ##### Job Settings ####
 #######################
-# restraint          500
-# n_cold_steps       20
-# n_hot_steps        20
 n_prod_steps       100
 compress_stages    True # Compress trajectory fragments for each stage into one file.
 frames_per_ns      1000
@@ -134,12 +131,12 @@ slurm_amber_module Amber/24
                 job_settings.PRMTOP = value;
             else if (setting == "inpcrd")
                 job_settings.INPCRD = value;
-            else if (setting == "restraint")
-                job_settings.MAX_RESTRAINT = stod(value);
-            else if (setting == "n_cold_steps")
-                job_settings.NUM_COLD_STEPS = stoi(value);
-            else if (setting == "n_hot_steps")
-                job_settings.NUM_HOT_STEPS = stoi(value);
+            // else if (setting == "restraint")
+            //     job_settings.MAX_RESTRAINT = stod(value);
+            // else if (setting == "n_cold_steps")
+            //     job_settings.NUM_COLD_STEPS = stoi(value);
+            // else if (setting == "n_hot_steps")
+            //     job_settings.NUM_HOT_STEPS = stoi(value);
             else if (setting == "n_prod_steps")
                 job_settings.NUM_PROD_STEPS = stoi(value);
             else if (setting == "frames_per_ns")

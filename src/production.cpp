@@ -69,6 +69,14 @@ void SetRestartFile(int startbead)
         std::string restart_file = "05_Production/prod." + lead_zero_number.str() + ".rst7";
         fs::copy(restart_file,"current_step.rst7");
     }
+    else
+    {
+        std::stringstream lead_zero_number;
+        lead_zero_number.str("");
+        lead_zero_number << std::setw(4) << std::setfill('0') << startbead;
+        std::string restart_file = "05_Production/prod." + lead_zero_number.str() + ".rst7";
+        fs::copy("current_step.rst7",restart_file);
+    }
 }
 
 void GenerateFileNames(FileList &files, std::string filebasename, int step_num)
@@ -76,7 +84,7 @@ void GenerateFileNames(FileList &files, std::string filebasename, int step_num)
         std::stringstream lead_zero_number;
         lead_zero_number.str("");
         lead_zero_number << std::setw(4) << std::setfill('0') << step_num;
-        files.AddFile("mdin",filebasename + lead_zero_number.str() + ".in");
+        files.AddFile("mdin",filebasename + ".in");
         files.AddFile("mdout",filebasename + lead_zero_number.str() + ".out");
         files.AddFile("restart",filebasename + lead_zero_number.str() + ".rst7");
         files.AddFile("trajectory",filebasename + lead_zero_number.str() + ".mdcrd");
@@ -121,8 +129,14 @@ void ProductionLoop(JobSettings settings, SlurmSettings slurm, int startbead, st
                 return;
             }
         }
+
+        // Collect latest nanosecond files back to main folder.
         ambermachine::AmberCopyBack(files.GetFile("mdin"),files.GetFile("restart"),files.GetFile("mdout"),files.GetFile("trajectory"),files.GetFile("csv"));
         fs::current_path(std::getenv("SLURM_SUBMIT_DIR"));
+        // #####################################################
+        // # REPORT BACK TO AGIMUS FOR BY-NANOSECOND FUNCTIONS #
+        // #   AutoMMPBSA, AutoAnalytics(Time-Dependent), etc  #
+        // #####################################################
         // Check if MMPBSA job, spawn if necessary.
         if (settings.RUN_MMPBSA)
         {

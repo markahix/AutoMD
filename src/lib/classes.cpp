@@ -33,11 +33,12 @@ JobSettings::JobSettings()
     INPCRD = "file.rst7";
 
     // Job Settings
-    MAX_RESTRAINT    = 500.00;
-    NUM_COLD_STEPS   = 10;
-    NUM_HOT_STEPS    = 10;
+    // MAX_RESTRAINT    = 500.00;
+    // NUM_COLD_STEPS   = 10;
+    // NUM_HOT_STEPS    = 10;
     NUM_PROD_STEPS   = 100;
     FRAMES_PER_NS    = 1000;
+    TRAJ_WRITE_FREQ  = 1000000/FRAMES_PER_NS;
     COMPRESS_STAGES  = false;
 
     // Environmental Settings

@@ -5,6 +5,7 @@
 
 namespace slurm
 {
+
     void update_job_name(std::string jobname);
     void submit_initialize_job(JobSettings settings,SlurmSettings slurm);
     void submit_preproduction_job(JobSettings settings, SlurmSettings slurm);
