@@ -33,9 +33,6 @@ JobSettings::JobSettings()
     INPCRD = "file.rst7";
 
     // Job Settings
-    // MAX_RESTRAINT    = 500.00;
-    // NUM_COLD_STEPS   = 10;
-    // NUM_HOT_STEPS    = 10;
     NUM_PROD_STEPS   = 100;
     FRAMES_PER_NS    = 1000;
     TRAJ_WRITE_FREQ  = 1000000/FRAMES_PER_NS;
@@ -43,6 +40,12 @@ JobSettings::JobSettings()
 
     // Environmental Settings
     TEMPERATURE = 300;
+
+    // Constant pH Settings
+    RUN_CONSTANT_PH = false;
+    MIN_PH_LEVEL = 4.0;
+    MAX_PH_LEVEL = 9.0;
+    PH_INCREMENT = 0.5;
 
     // MMPBSA settings
     RUN_MMPBSA = false;

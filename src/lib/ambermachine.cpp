@@ -18,6 +18,15 @@ n_prod_steps       100
 compress_stages    True # Compress trajectory fragments for each stage into one file.
 frames_per_ns      1000
 
+###############################
+##### Constant pH Settings ####
+###############################
+constant_ph        False # change to True if desired
+min_ph_level       4.0
+max_ph_level       9.0
+ph_increment       0.5
+init_cpin_file     file.cpin
+
 #######################
 ##### Environment #####
 #######################
@@ -41,7 +50,7 @@ hbonds_mask        :1-100
 normal_modes       :1-100@CA
 correl_mask        :1-100
 solvent_mask       :WAT
-counterions_mask   :K+,Cl-
+counterions_mask   :Na+,Cl-
 
 #######################
 #### Slurm Settings ###
@@ -51,7 +60,7 @@ slurm_queue        express
 slurm_gpu          gpu:nvidia_a30_1g.12gb:2
 slurm_nodelist     arw4,arw5  #delete if you don't care what nodes are used.
 slurm_exclude_nodes arw1,arw2,arw3  #delete if you don't care what nodes are used.
-slurm_amber_module Amber/24
+slurm_amber_module Amber/24-cuda-12p4
 
 %BEGIN_CPPTRAJ
 #Any additional or specific CPPTRAJ commands you want should go here.
@@ -125,18 +134,11 @@ slurm_amber_module Amber/24
                 continue;
             }
 
-
             dummy >> setting >> value;
             if (setting == "prmtop")
                 job_settings.PRMTOP = value;
             else if (setting == "inpcrd")
                 job_settings.INPCRD = value;
-            // else if (setting == "restraint")
-            //     job_settings.MAX_RESTRAINT = stod(value);
-            // else if (setting == "n_cold_steps")
-            //     job_settings.NUM_COLD_STEPS = stoi(value);
-            // else if (setting == "n_hot_steps")
-            //     job_settings.NUM_HOT_STEPS = stoi(value);
             else if (setting == "n_prod_steps")
                 job_settings.NUM_PROD_STEPS = stoi(value);
             else if (setting == "frames_per_ns")
@@ -170,6 +172,23 @@ slurm_amber_module Amber/24
                 job_settings.SOLVENT_MASK = value;
             else if (setting == "counterions_mask")
                 job_settings.COUNTERIONS_MASK = value;
+            // Constant pH Settings
+            else if (setting == "constant_ph")
+            {
+                if (value == "True")
+                {
+                    job_settings.RUN_CONSTANT_PH = true;
+                }
+            }
+                
+            else if (setting == "min_ph_level")
+                job_settings.MIN_PH_LEVEL = stod(value);
+            else if (setting == "max_ph_level")
+                job_settings.MAX_PH_LEVEL = stod(value);
+            else if (setting == "ph_increment")
+                job_settings.PH_INCREMENT = stod(value);
+
+            // SLURM Settings
             else if (setting == "slurm_partition")
                 slurm.SLURM_partition = value;
             else if (setting == "slurm_queue")
@@ -205,30 +224,6 @@ slurm_amber_module Amber/24
             slurm::submit_preproduction_job(settings,slurm);
             return;
         }
-        // if ( !utils::CheckFileExists(".AMBER_MINIMIZE_COMPLETE") ) // amber_minimize.sh
-        // {
-        //     std::cout << "Submitting AmberMachine Minimization." << std::endl;
-        //     slurm::submit_minimize_job(settings,slurm);
-        //     return;
-        // }
-        // if ( !utils::CheckFileExists(".AMBER_COLD_RELAX_COMPLETE") ) // amber_cold_relax.sh
-        // {
-        //     std::cout << "Submitting AmberMachine Cold Relaxation." << std::endl;
-        //     slurm::submit_cold_equil_job(settings,slurm);
-        //     return;
-        // }
-        // if ( !utils::CheckFileExists(".AMBER_HEATING_COMPLETE") ) // amber_heating.sh
-        // {
-        //     std::cout << "Submitting AmberMachine Heating." << std::endl;
-        //     slurm::submit_heating_job(settings,slurm);
-        //     return;
-        // }
-        // if ( !utils::CheckFileExists(".AMBER_HOT_RELAX_COMPLETE") ) // amber_hot_relax.sh
-        // {
-        //     std::cout << "Submitting AmberMachine Hot Relaxation." << std::endl;
-        //     slurm::submit_hot_equil_job(settings,slurm);
-        //     return;
-        // }
         if ( !utils::CheckFileExists(".AMBER_PRODUCTION_COMPLETE") ) // amber_production.sh
         {
             std::cout << "Submitting AmberMachine Production." << std::endl;
@@ -290,6 +285,58 @@ slurm_amber_module Amber/24
         fs::current_path(curr_path);
     }
 
+    void AmberLoopCUDAConstpH(SlurmSettings slurm)
+    {
+        std::string curr_path = fs::current_path();
+        fs::current_path("/tmp/");
+
+        std::stringstream buffer;
+        buffer.str("");
+        buffer << "pmemd.cuda -O";
+        buffer << " -i mdin.in";
+        buffer << " -o mdout.out";
+        buffer << " -p job.prmtop";
+        buffer << " -c last_step.rst7";
+        buffer << " -r current_step.rst7";
+        buffer << " -x trajectory.mdcrd";
+        buffer << " -ref start_coords.rst7";
+        buffer << " -cpin cpin.in";
+        buffer << " -cpout cpout.out";
+        buffer << " -cprestrt cpin.rstrt";
+        utils::silent_shell(buffer.str().c_str());
+        fs::current_path(curr_path);
+    }
+
+    void AmberCopyBack(std::map<std::string, std::string> files_list)
+    {
+        bool EPIC_FAIL = false;
+        std::string curr_path = fs::current_path();
+        fs::current_path("/tmp/");
+        for (auto const& pair : files_list)
+        {
+            if (fs::exists(pair.first))
+            {
+                fs::copy(pair.first, pair.second, fs::copy_options::update_existing);
+                if (pair.first == "current_step.rst7")
+                {
+                    fs::copy("current_step.rst7",(std::string)std::getenv("SLURM_SUBMIT_DIR")+"/current_step.rst7",fs::copy_options::update_existing);
+                    fs::copy("current_step.rst7","last_step.rst7",fs::copy_options::update_existing);
+                    fs::remove("current_step.rst7");
+                }
+            }
+            else
+            {
+                EPIC_FAIL = true;
+                error_log(pair.first+" does not exist in /tmp/! There was a problem.");
+            }
+        }        
+        if (EPIC_FAIL)
+        {
+            error_log("Files were missing! Terminating.",1);
+        }
+        fs::current_path(curr_path);
+    }
+
     void AmberCopyBack(std::string mdin_file,std::string restart_file, std::string mdout_file, std::string trajectory_file, std::string csv_file)
     {
         bool EPIC_FAIL = false;
@@ -347,8 +394,6 @@ slurm_amber_module Amber/24
         {
             error_log("Files were missing! Terminating.",1);
         }
-        utils::mdout_to_csv(mdout_file, csv_file);
-
         fs::current_path(curr_path);
 }
 }

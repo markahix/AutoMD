@@ -286,9 +286,11 @@ int main(int argc, char** argv)
     ambermachine::read_amberinput(settings,slurm);
 
     // File Validations
+    std::cout << "Checking files." << std::endl;
     filechecks(settings);
 
     // Amber Mask Validations
+    std::cout << "Checking masks." << std::endl;
     mask_checks(settings);
 
     // Generate Replicate Folder

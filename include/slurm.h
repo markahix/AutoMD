@@ -14,6 +14,7 @@ namespace slurm
     void submit_heating_job(JobSettings settings,SlurmSettings slurm);
     void submit_hot_equil_job(JobSettings settings,SlurmSettings slurm);
     void submit_production_job(JobSettings settings,SlurmSettings slurm);
+    void submit_const_ph_production_job(JobSettings settings,SlurmSettings slurm, double ph_level);
     void submit_mmpbsa_job(JobSettings settings, SlurmSettings slurm, std::string trajectory);
     void submit_sasa_job(JobSettings settings, SlurmSettings slurm, std::string trajectory);
     void submit_analysis_job(JobSettings settings,SlurmSettings slurm);

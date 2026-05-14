@@ -162,13 +162,6 @@ void latex::write_cold_equil_tex(JobSettings settings)
     std::string rawtext=R"(
 \section{Cold Density Equilibration}
 \paragraph{}Cold density equilibration at 10K, holding pressure constant (NPT ensemble).
-Restraints are iteratively relaxed (linear descent over)" 
-+ std::to_string(settings.NUM_COLD_STEPS) + 
-R"( steps) on )" 
-+ settings.COMPLEX_MASK + 
-R"(, beginning at )" 
-+ std::to_string(settings.MAX_RESTRAINT) + 
-R"($kcal\\cdot mol^{-1}$.
 )";
     utils::write_to_file("00_Report/cold_equil.tex",rawtext);
 
@@ -188,13 +181,6 @@ void latex::write_hot_equil_tex(JobSettings settings)
     std::string rawtext = R"(
 \section{Hot Density Equilibration}
 \paragraph{}Hot density equilibration at 300K, holding pressure constant (NPT ensemble).
-Restraints are iteratively relaxed (linear descent over)" 
-+ std::to_string(settings.NUM_HOT_STEPS) + 
-R"( steps) on )" 
-+ settings.COMPLEX_MASK + 
-R"(, beginning at )" 
-+ std::to_string(settings.MAX_RESTRAINT) + 
-R"($kcal\\cdot mol^{-1}$.
 )";
     utils::write_to_file("00_Report/hot_equil.tex",rawtext);
 

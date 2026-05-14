@@ -2,8 +2,8 @@
 #define CONFIG_H
 
 #define DEFAULT_TERACHEM_MODULE "Terachem/1.9.3-2023"
-#define DEFAULT_PDFLATEX_MODULE "texlive/2020"
-#define DEFAULT_AMBER_MODULE "Amber/24"
+#define DEFAULT_PDFLATEX_MODULE "texlive/2025"
+#define DEFAULT_AMBER_MODULE "Amber/24-cuda-12p4"
 
 // SLURM GPU Job Settings
 #define SLURM_DEFAULT_GPU_JOB_QUEUE "express"

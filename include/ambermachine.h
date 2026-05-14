@@ -19,7 +19,9 @@ namespace ambermachine
     void report(JobSettings settings,SlurmSettings slurm);
     void AmberLoop(SlurmSettings slurm);
     void AmberLoopCUDA(SlurmSettings slurm);
-    void AmberCopyBack(std::string mdin_file,std::string restart_file, std::string mdout_file, std::string trajectory_file, std::string csv_file);
+    void AmberLoopCUDAConstpH(SlurmSettings slurm);
+    void AmberCopyBack(std::map<std::string, std::string> files_list);
+    void AmberCopyBack(std::string mdin_file, std::string restart_file, std::string mdout_file, std::string trajectory_file, std::string csv_file);
 }
 
 #endif

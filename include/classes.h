@@ -38,6 +38,12 @@ class JobSettings
         // Environment Settings
         double TEMPERATURE;
         
+        // Constant pH Settings
+        bool RUN_CONSTANT_PH;
+        double MIN_PH_LEVEL;
+        double MAX_PH_LEVEL;
+        double PH_INCREMENT;
+
         //MMPBSA settings
         bool RUN_MMPBSA;
         std::string RECEPTOR_MASK;

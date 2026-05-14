@@ -164,6 +164,24 @@ namespace slurm
         sys_command << slurm.SLURM_executable << " --production\"";
         utils::silent_shell(sys_command.str().c_str());
     }
+    void submit_const_ph_production_job(JobSettings settings, SlurmSettings slurm, double ph_level)
+    {
+        std::stringstream sys_command;
+        sys_command.str("");
+        sys_command << "sbatch -J AmberMachineProduction -p " << slurm.SLURM_partition;
+        sys_command << " -q "<< slurm.SLURM_queue;
+        sys_command << " -t 5-0:00:00 -N 1 -n 1";
+        sys_command << " --gres=" << slurm.SLURM_gpu;
+        if (slurm.SLURM_nodelist != " ")
+            sys_command << " --nodelist=" << slurm.SLURM_nodelist;
+        else if (slurm.SLURM_exclude_nodes != " ")
+            sys_command << " --exclude=" << slurm.SLURM_exclude_nodes;
+        sys_command << " --mem=20GB";
+        sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"";
+        sys_command << "module load " << slurm.SLURM_amber_module << "; ";
+        sys_command << slurm.SLURM_executable << " --production " << ph_level << "\"";
+        utils::silent_shell(sys_command.str().c_str());
+    }
 
     void submit_mmpbsa_job(JobSettings settings, SlurmSettings slurm, std::string trajectory)
     {
