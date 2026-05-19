@@ -69,7 +69,7 @@ void latex::figure_and_code_to_pdf(std::string imagefile, std::string caption, s
 )";
 
     utils::write_to_file("tmp.tex",latex);
-    std::string cmd = "module load texlive/2020; pdflatex --jobname=" + jobname + "tmp.tex";
+    std::string cmd = "module load texlive/2025; pdflatex --jobname=" + jobname + "tmp.tex";
     utils::silent_shell(cmd.c_str());
 
 }
