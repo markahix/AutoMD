@@ -28,7 +28,7 @@ void GenerateFileNames(FileList &files, std::string filebasename, int step_num)
         std::stringstream lead_zero_number;
         lead_zero_number.str("");
         lead_zero_number << std::setw(4) << std::setfill('0') << step_num;
-        files.AddFile("mdin",filebasename + ".in");
+        files.AddFile("mdin",filebasename + "in");
         files.AddFile("mdout",filebasename + lead_zero_number.str() + ".out");
         files.AddFile("restart",filebasename + lead_zero_number.str() + ".rst7");
         files.AddFile("trajectory",filebasename + lead_zero_number.str() + ".mdcrd");
@@ -103,10 +103,10 @@ void CallByNanosecondAnalytics(JobSettings settings, SlurmSettings slurm, FileLi
 
 }
 
-void CompressProductionFolder(JobSettings settings, std::string production_folder)
+void CompressProductionFolder(JobSettings settings)
 {
     std::string current_dir=fs::current_path();
-    fs::current_path(production_folder);
+    fs::current_path(settings.PRODUCTION_DIRECTORY);
     std::stringstream buffer;
     // Move restarts into RESTARTS folder
     buffer.str("");
@@ -122,7 +122,7 @@ void CompressProductionFolder(JobSettings settings, std::string production_folde
 
     if (settings.COMPRESS_STAGES)
     {
-        fs::current_path(production_folder);
+        fs::current_path(settings.PRODUCTION_DIRECTORY);
         buffer.str("");
         buffer << "tar -czvf RESTARTS.tar.gz RESTARTS/ && rm -r RESTARTS/; tar -czvf OUTPUTS.tar.gz OUTPUTS/ && rm -r OUTPUTS/; cd -";
         utils::silent_shell(buffer.str().c_str());
@@ -131,7 +131,7 @@ void CompressProductionFolder(JobSettings settings, std::string production_folde
         std::stringstream cpptraj;
         cpptraj.str("");
         cpptraj << "parm " << settings.PRMTOP << std::endl;
-        std::vector<std::string> traj_file_list = utils::sort_files_by_timestamp(production_folder,".mdcrd");
+        std::vector<std::string> traj_file_list = utils::sort_files_by_timestamp(settings.PRODUCTION_DIRECTORY,".mdcrd");
         for (unsigned int i=0; i < traj_file_list.size(); i++)
         {
             cpptraj << "trajin " << traj_file_list[i] << std::endl;
@@ -147,7 +147,7 @@ void CompressProductionFolder(JobSettings settings, std::string production_folde
         if (fs::exists(newprodfile))
         {
             buffer.str("");
-            buffer << "rm " << production_folder << "/prod.*.mdcrd compress_prod.in compress_prod.out";
+            buffer << "rm " << settings.PRODUCTION_DIRECTORY << "/prod.*.mdcrd compress_prod.in compress_prod.out";
             utils::silent_shell(buffer.str().c_str());
         }
     }

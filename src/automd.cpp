@@ -91,6 +91,11 @@ int main(int argc, char **argv)
     if (jobflag == "--production")
     {
         utils::silent_shell("automd_production 1> automd_prod.out 2> automd_prod.err");
+        if (argc > 2)
+        {
+            // normal_log("Additional command line flag identified.  Likely CpHMD.");
+            return 0;
+        }
         if (!fs::exists(".AMBER_PRODUCTION_COMPLETE"))
         {
             error_log("Failed to complete production.  Please check error logs",1);

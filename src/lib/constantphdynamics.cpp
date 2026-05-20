@@ -9,7 +9,7 @@ icnstph=2, ntcnstph=100,
 */
 
 void write_mdin_production(JobSettings settings, double current_pH)
-{
+{ // CHANGE NSTLIM to 1000000 when successfully running MD and copying back.
     std::string heat_script = R"(
 Molecular Dynamics Production
  &cntrl
@@ -20,12 +20,12 @@ Molecular Dynamics Production
   ntwx     = )" + std::to_string(settings.TRAJ_WRITE_FREQ) + R"(,
   ntwv     = 00,
   ioutfm   = 1,
-  nstlim   = 1000000,
+  nstlim   = 100000, 
   t        = 0.00,
   dt       = 0.00100,
   ntc      = 2,
   ntf      = 2,
-  ntp      = 2,
+  ntp      = 0,
   ntt      = 3,
   temp0    = )" + std::to_string(settings.TEMPERATURE) + R"(, 
   tempi    = )" + std::to_string(settings.TEMPERATURE) + R"(, 
@@ -85,6 +85,15 @@ bool JobFailed(std::string mdout_file)
     return false;
 }
 
+std::string GetPhProdFolderName(double ph_level)
+{
+    std::stringstream foldername;
+    foldername.str("");
+    foldername << "05_Production/pH_";
+    foldername << std::fixed << std::setw(5) << std::setprecision(2) << std::setfill('0') << ph_level << "/";
+    return fs::absolute(foldername.str());
+}
+
 void ConstantpHProductionLoop(JobSettings settings, SlurmSettings slurm, int startbead, std::string filebasename, FileList &files, double ph_level)
 {
     for (int i=startbead; i < settings.NUM_PROD_STEPS; i++)
@@ -107,7 +116,7 @@ void ConstantpHProductionLoop(JobSettings settings, SlurmSettings slurm, int sta
         ambermachine::AmberLoopCUDAConstpH(slurm);
 
         // Error Check the output, terminate job if a step fails.
-        if (JobFailed("mdout.out"))
+        if (JobFailed("/tmp/mdout.out"))
         {
             std::stringstream buffer;
             error_log("Job Failed. Terminating.",1);
@@ -140,29 +149,34 @@ void constph::PrepareConstantpHDynamics(JobSettings settings, SlurmSettings slur
     double current_ph = settings.MIN_PH_LEVEL;
     double max_ph = settings.MAX_PH_LEVEL;
         // currently in Replicate_X/ directory...
-    fs::create_directory("05_Production/");
+    fs::create_directory(settings.PRODUCTION_DIRECTORY);
     do
     {
-        std::stringstream foldername;
-        foldername.str("");
-        foldername << "05_Production/pH_";
-        foldername << std::setw(5) << std::setprecision(2)<< std::setfill('0') << current_ph << "/";
-        fs::create_directories(foldername.str());
-        // put necessary files into starting directory
-        fs::copy("cphmd.prmtop", foldername.str() + "file.prmtop");
-        fs::copy("current_step.rst7", foldername.str() + "current_step.rst7");
+        std::string foldername = GetPhProdFolderName(current_ph);
+        if (!fs::is_directory(foldername))
+        {
+            // if folder already exists, just do the submit and move on.
+            fs::create_directories(foldername);
+            // put necessary files into starting directory
+            // write_mdin_production(settings, current_ph);
+            // fs::copy("mdin.in", foldername + "prod.in");
+            fs::remove("mdin.in");
+            fs::copy("cphmd.prmtop", foldername + "file.prmtop");
+            fs::copy("current_step.rst7", foldername + "current_step.rst7");
+        }
+        else
+        {
+            normal_log("Identified existing constant pH directory at "+foldername + " . Submitting continuation of job.");
+        }
         slurm::submit_const_ph_production_job(settings, slurm, current_ph);
         current_ph = current_ph + settings.PH_INCREMENT;
-    } while (current_ph < max_ph); 
+    } while (current_ph < max_ph + settings.PH_INCREMENT); 
 }
 
 void constph::RunConstantpHDynamics(JobSettings settings, SlurmSettings slurm, FileList files, double ph_level)
 {
-    std::stringstream foldername;
-    foldername.str("");
-    foldername << "/05_Production/pH_";
-    foldername << std::setw(5) << std::setprecision(2)<< std::setfill('0') << ph_level << "/";
-    std::string filebasename = (std::string)std::getenv("SLURM_SUBMIT_DIR") + foldername.str() + "prod.";
+    settings.UpdateProductionDirectory(GetPhProdFolderName(ph_level));
+    std::string filebasename = settings.PRODUCTION_DIRECTORY + "prod.";
 
     // FINISH THIS FUNCTIONALITY
     // copy current files to /tmp/ -- INCLUDE CPIN and cphmd.prmtop (new prmtop made by cpinutil.py)
@@ -173,14 +187,16 @@ void constph::RunConstantpHDynamics(JobSettings settings, SlurmSettings slurm, F
 
 
     //identify current bead
-    int startbead = GetStartBead(foldername.str());
+    int startbead = GetStartBead(settings.PRODUCTION_DIRECTORY);
 
     //ensure that matching rst7 is in the "current_step.rst7" position in the main directory.
-    SetRestartFile(startbead, foldername.str());
+    SetRestartFile(startbead, settings.PRODUCTION_DIRECTORY);
     
     // copy to /tmp
-    fs::copy("file.prmtop","/tmp/job.prmtop");
-    fs::copy("current_step.rst7","/tmp/last_step.rst7");
+    fs::copy("cpin.in","/tmp/cpin.in");
+    fs::copy(settings.PRODUCTION_DIRECTORY + "file.prmtop","/tmp/job.prmtop");
+    fs::copy(settings.PRODUCTION_DIRECTORY + "current_step.rst7","/tmp/last_step.rst7");
+    // fs::copy(settings.PRODUCTION_DIRECTORY + "prod.in","/tmp/mdin.in");
     fs::copy(settings.INPCRD,"/tmp/start_coords.rst7");
 
     // Loop over all production steps
@@ -189,13 +205,13 @@ void constph::RunConstantpHDynamics(JobSettings settings, SlurmSettings slurm, F
     fs::remove("mdinfo");
     
     // Error Checking after finishing loop
-    startbead = GetStartBead(foldername.str());
+    startbead = GetStartBead(settings.PRODUCTION_DIRECTORY);
     if (startbead != settings.NUM_PROD_STEPS)
     {
         error_log("ERROR:  Number of production dynamics steps does not match expectations.",1);
     }
 
-    CompressProductionFolder(settings,foldername.str());
+    CompressProductionFolder(settings);
 
     // Complete Production job stage
     slurm::update_job_name("Completing_Production");

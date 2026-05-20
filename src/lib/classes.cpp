@@ -28,6 +28,18 @@ SlurmSettings::~SlurmSettings()
 
 JobSettings::JobSettings()
 {
+    // Absolute Paths
+    SUBMISSION_DIRECTORY = std::getenv("SLURM_SUBMIT_DIR");
+    std::cout << "Job submitted from: " << SUBMISSION_DIRECTORY << std::endl;
+    PRODUCTION_DIRECTORY = fs::absolute(SUBMISSION_DIRECTORY + "/05_Production/");
+    
+    normal_log("Job Submitted From: " + SUBMISSION_DIRECTORY);
+    if (fs::is_directory(PRODUCTION_DIRECTORY))
+    {
+        normal_log("Current Production Directory: " + PRODUCTION_DIRECTORY);
+    }
+    
+
     // Input Filenames
     PRMTOP = "file.prmtop";
     INPCRD = "file.rst7";
@@ -68,6 +80,16 @@ JobSettings::JobSettings()
 JobSettings::~JobSettings()
 {
     
+}
+
+void JobSettings::UpdateProductionDirectory(std::string new_directory)
+{
+    std::string tmp_new_dir = fs::absolute(new_directory);
+    if (fs::is_directory(tmp_new_dir))
+    {
+        PRODUCTION_DIRECTORY = tmp_new_dir;
+        normal_log("Current Production Directory: " + PRODUCTION_DIRECTORY);
+    }
 }
 
 FileList::FileList()

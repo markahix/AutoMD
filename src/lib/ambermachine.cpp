@@ -266,6 +266,7 @@ slurm_amber_module Amber/24-cuda-12p4
         utils::silent_shell(buffer.str().c_str());
         fs::current_path(curr_path);
     }
+
     void AmberLoopCUDA(SlurmSettings slurm)
     {
         std::string curr_path = fs::current_path();
@@ -304,6 +305,9 @@ slurm_amber_module Amber/24-cuda-12p4
         buffer << " -cpout cpout.out";
         buffer << " -cprestrt cpin.rstrt";
         utils::silent_shell(buffer.str().c_str());
+        std::cout << utils::GetSysResponse("ls -lrth /tmp/*") << std::endl;
+        std::cout << utils::GetSysResponse("cat /tmp/mdout.out") << std::endl;
+
         fs::current_path(curr_path);
     }
 

@@ -22,6 +22,10 @@ class SlurmSettings
 class JobSettings
 {
     public:
+        // Absolute Paths
+        std::string SUBMISSION_DIRECTORY;
+        std::string PRODUCTION_DIRECTORY;
+
         // Input Filenames
         std::string PRMTOP;
         std::string INPCRD;
@@ -64,6 +68,7 @@ class JobSettings
         // Constructor/Destructor
         JobSettings();
         ~JobSettings();
+        void UpdateProductionDirectory(std::string new_directory);
 };
 
 class FileList

@@ -87,18 +87,17 @@ void ProductionLoop(JobSettings settings, SlurmSettings slurm, int startbead, st
 
 void classical::RunClassicalDynamics(JobSettings settings, SlurmSettings slurm, FileList files)
 {
-    std::string filebasename = (std::string)std::getenv("SLURM_SUBMIT_DIR") + "/05_Production/prod.";
-    std::string production_directory = "05_Production/";
+    std::string filebasename = settings.PRODUCTION_DIRECTORY+ "/prod.";
     UpdateReport();
 
     // create job subdirectory.
-    fs::create_directory(production_directory);
+    fs::create_directory(settings.PRODUCTION_DIRECTORY);
 
     //identify current bead
-    int startbead = GetStartBead(production_directory);
+    int startbead = GetStartBead(settings.PRODUCTION_DIRECTORY);
 
     //ensure that matching rst7 is in the "current_step.rst7" position in the main directory.
-    SetRestartFile(startbead, production_directory);
+    SetRestartFile(startbead, settings.PRODUCTION_DIRECTORY);
     
     // copy to /tmp
     fs::copy(settings.PRMTOP,"/tmp/job.prmtop");
@@ -112,7 +111,7 @@ void classical::RunClassicalDynamics(JobSettings settings, SlurmSettings slurm, 
     fs::remove("mdinfo");
     
     // Error Checking after finishing loop
-    startbead = GetStartBead(production_directory);
+    startbead = GetStartBead(settings.PRODUCTION_DIRECTORY);
     if (startbead != settings.NUM_PROD_STEPS)
     {
         error_log("ERROR:  Number of production dynamics steps does not match expectations.",1);
@@ -121,7 +120,7 @@ void classical::RunClassicalDynamics(JobSettings settings, SlurmSettings slurm, 
     // Plot the Production.csv using python ... 
     GeneratePlotsAndReport(files);
 
-    CompressProductionFolder(settings,production_directory);
+    CompressProductionFolder(settings);
 
     // Complete Production job stage
     slurm::update_job_name("Completing_Production");
