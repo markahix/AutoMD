@@ -29,10 +29,16 @@ SlurmSettings::~SlurmSettings()
 JobSettings::JobSettings()
 {
     // Absolute Paths
-    SUBMISSION_DIRECTORY = std::getenv("SLURM_SUBMIT_DIR");
-    std::cout << "Job submitted from: " << SUBMISSION_DIRECTORY << std::endl;
+    std::cout << "Got Job Submission Directory." << std::endl;
+    if (std::getenv("SLURM_SUBMIT_DIR")==NULL)
+    {
+        SUBMISSION_DIRECTORY = fs::absolute("./");
+    }
+    else
+    {
+        SUBMISSION_DIRECTORY = std::getenv("SLURM_SUBMIT_DIR");
+    }
     PRODUCTION_DIRECTORY = fs::absolute(SUBMISSION_DIRECTORY + "/05_Production/");
-    
     normal_log("Job Submitted From: " + SUBMISSION_DIRECTORY);
     if (fs::is_directory(PRODUCTION_DIRECTORY))
     {

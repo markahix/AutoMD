@@ -9,7 +9,7 @@ icnstph=2, ntcnstph=100,
 */
 
 void write_mdin_production(JobSettings settings, double current_pH)
-{ // CHANGE NSTLIM to 1000000 when successfully running MD and copying back.
+{
     std::string heat_script = R"(
 Molecular Dynamics Production
  &cntrl
@@ -20,7 +20,7 @@ Molecular Dynamics Production
   ntwx     = )" + std::to_string(settings.TRAJ_WRITE_FREQ) + R"(,
   ntwv     = 00,
   ioutfm   = 1,
-  nstlim   = 100000, 
+  nstlim   = 1000000, 
   t        = 0.00,
   dt       = 0.00100,
   ntc      = 2,

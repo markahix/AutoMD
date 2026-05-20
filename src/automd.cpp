@@ -38,13 +38,15 @@ void hostname_check(SlurmSettings slurm)
 int main(int argc, char **argv)
 {
     // utils::splash_screen();
-
+    std::cout << "Initializing Job Settings" << std::endl;
     JobSettings settings;
+    std::cout << "Initializing SLURM Settings" << std::endl;
     SlurmSettings slurm;
     slurm.SLURM_executable = argv[0];
 
     // Validate amberinput.in (done for each job stage to ensure the file has not been corrupted and update settings
     // if it has been changed in a manner that will affect subsequent stages (such as changing n_prod_steps)
+    std::cout << "Parsing amberinput.in for job information." << std::endl;
     ambermachine::read_amberinput(settings,slurm);
 
     // If we're called without flags, figure out where we are and continue from there.
