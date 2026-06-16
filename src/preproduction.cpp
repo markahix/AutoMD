@@ -5,13 +5,15 @@ void write_mdin_minimize()
     std::string mdin_text = R"(Energy Minization To Eliminate Clashes
  &cntrl
   imin   = 1,
-  maxcyc = 500,
-  ncyc   = 50,
+  maxcyc = 5000,
+  ncyc   = 500,
   ntc    = 2, 
   ntf    = 1,
   iwrap  = 1,
   ntb    = 1,
-  cut    = 10
+  cut    = 10,
+  ntwx   = 1,
+  ntwr   = 1
    /
 END
 )";
@@ -282,6 +284,7 @@ void minimize_job(SlurmSettings slurm, JobSettings settings)
     buffer << " -r current_step.rst7";
     buffer << " -x " << trajectory_file;
     buffer << " -ref " << settings.INPCRD;
+    // buffer << " >> minimize.log ";
     slurm::update_job_name("Running_Minimization");
     normal_log("Running AMBER minimization...");
     utils::silent_shell(buffer.str().c_str());

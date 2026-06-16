@@ -477,13 +477,13 @@ void ambermachine::analysis(JobSettings settings, SlurmSettings slurm)
     // MMPBSA processing to plots!
 
     // generate ambermachine.vmd and run for each: RMSF, Normal Modes (first 4 modes), correl (if ligand + receptor mask)
-    slurm::update_job_name("Generating_VMD_RMSF");
-    // RMSF (VMD)
-    rmsf_to_vmd(settings);
+    // slurm::update_job_name("Generating_VMD_RMSF");
+    // // RMSF (VMD)
+    // rmsf_to_vmd(settings);
 
-    // Normal Modes (VMD)
-    slurm::update_job_name("Generating_VMD_NormalModes");
-    normal_mode_to_vmd(settings, 4); // first 4 normal modes
+    // // Normal Modes (VMD)
+    // slurm::update_job_name("Generating_VMD_NormalModes");
+    // normal_mode_to_vmd(settings, 4); // first 4 normal modes
 
     // If ligand mask + receptor mask:
     // 1.  get correlation array based on ligand mask?
