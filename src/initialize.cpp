@@ -196,87 +196,91 @@ void generate_replicate_folder(JobSettings settings)
         fs::create_directory("06_Analysis/");
 }
 
-void generate_mmpbsa_inputs(JobSettings settings, SlurmSettings slurm)
-{
-    if (! settings.RUN_MMPBSA)
-    {
-        return;
-    }
-    slurm::update_job_name("Generating_MMPBSA_Inputs");
-    // make MMPBSA_Inputs folder
-    fs::create_directory("MMPBSA_Inputs/");
+// void generate_mmpbsa_inputs(JobSettings settings, SlurmSettings slurm)
+// {
+//     if (! settings.RUN_MMPBSA)
+//     {
+//         return;
+//     }
+//     slurm::update_job_name("Generating_MMPBSA_Inputs");
 
-    // Generate complex.prmtop
-    std::stringstream buffer;
-    buffer.str("");
-    buffer << "parm " << settings.PRMTOP << std::endl;
-    buffer << "parmstrip !" << settings.COMPLEX_MASK << std::endl;
-    buffer << "parmwrite out MMPBSA_Inputs/complex.prmtop" << std::endl << "quit" << std::endl;
-    utils::write_to_file("parmed.in",buffer.str());
-    buffer.str("");
-    // buffer << "module load " << slurm.SLURM_amber_module << "; ";
-    buffer << "cpptraj -i parmed.in > complex_parmed.log && rm parmed.in";
-    slurm::update_job_name("Generating_MMPBSA_Inputs.complex");
-    utils::silent_shell(buffer.str().c_str());
+//     // autommpbsa --prepare -cm :1-460 -rm :1-459 -lm :460 -s file.prmtop
+//     // make MMPBSA_Inputs folder
+//     // fs::create_directory("MMPBSA_Inputs/");
 
-    // Generate receptor.prmtop
-    buffer.str("");
-    buffer << "parm " << settings.PRMTOP << std::endl;
-    buffer << "parmstrip !" << settings.RECEPTOR_MASK << std::endl;
-    buffer << "parmwrite out MMPBSA_Inputs/receptor.prmtop" << std::endl << "quit" << std::endl;
-    utils::write_to_file("parmed.in",buffer.str());
-    buffer.str("");
-    // buffer << "module load " << slurm.SLURM_amber_module << "; ";
-    buffer << "cpptraj -i parmed.in > receptor_parmed.log && rm parmed.in";
-    slurm::update_job_name("Generating_MMPBSA_Inputs.receptor");
-    utils::silent_shell(buffer.str().c_str());
+//     // Generate complex.prmtop
+//     std::stringstream buffer;
+//     buffer.str("");
+//     buffer << "autommpbsa --prepare -cm " << settings.COMPLEX_MASK << " -rm " << settings.RECEPTOR_MASK << " -lm " << settings.LIGAND_MASK << " -sp " << settings.PRMTOP;
+//     utils::silent_shell(buffer.str().c_str());
+//     // buffer << "parm " << settings.PRMTOP << std::endl;
+//     // buffer << "parmstrip !" << settings.COMPLEX_MASK << std::endl;
+//     // buffer << "parmwrite out MMPBSA_Inputs/complex.prmtop" << std::endl << "quit" << std::endl;
+//     // utils::write_to_file("parmed.in",buffer.str());
+//     // buffer.str("");
+//     // // buffer << "module load " << slurm.SLURM_amber_module << "; ";
+//     // buffer << "cpptraj -i parmed.in > complex_parmed.log && rm parmed.in";
+//     // slurm::update_job_name("Generating_MMPBSA_Inputs.complex");
+//     // utils::silent_shell(buffer.str().c_str());
 
-    // Generate ligand.prmtop
-    buffer.str("");
-    buffer << "parm " << settings.PRMTOP << std::endl;
-    buffer << "parmstrip !" << settings.LIGAND_MASK << std::endl;
-    buffer << "parmwrite out MMPBSA_Inputs/ligand.prmtop" << std::endl << "quit" << std::endl;
-    utils::write_to_file("parmed.in",buffer.str());
-    buffer.str("");
-    // buffer << "module load " << slurm.SLURM_amber_module << "; ";
-    buffer << "cpptraj -i parmed.in > ligand_parmed.log && rm parmed.in";
-    slurm::update_job_name("Generating_MMPBSA_Inputs.ligand");
-    utils::silent_shell(buffer.str().c_str());
+//     // // Generate receptor.prmtop
+//     // buffer.str("");
+//     // buffer << "parm " << settings.PRMTOP << std::endl;
+//     // buffer << "parmstrip !" << settings.RECEPTOR_MASK << std::endl;
+//     // buffer << "parmwrite out MMPBSA_Inputs/receptor.prmtop" << std::endl << "quit" << std::endl;
+//     // utils::write_to_file("parmed.in",buffer.str());
+//     // buffer.str("");
+//     // // buffer << "module load " << slurm.SLURM_amber_module << "; ";
+//     // buffer << "cpptraj -i parmed.in > receptor_parmed.log && rm parmed.in";
+//     // slurm::update_job_name("Generating_MMPBSA_Inputs.receptor");
+//     // utils::silent_shell(buffer.str().c_str());
 
-    // Generate mmpbsa.in
-    buffer.str("");
-    buffer << "Input file for running PB and GB" << std::endl;
-    buffer << "&general" << std::endl;
-    buffer << "   keep_files=1," << std::endl;
-    buffer << "   entropy=0," << std::endl;
-    buffer << "   ligand_mask=" << settings.LIGAND_MASK << "," << std::endl;
-    buffer << "   strip_mask=!" << settings.COMPLEX_MASK << "," << std::endl;
-    buffer << "   receptor_mask=" << settings.RECEPTOR_MASK << std::endl;
-    buffer << "/" << std::endl;
-    buffer << "&gb" << std::endl;
-    buffer << "  igb=2, saltcon=" << settings.SALT_CONC << "," << std::endl;
-    buffer << "/" << std::endl;
-    buffer << "&decomp" << std::endl;
-    buffer << " idecomp=1," << std::endl;
-    buffer << " dec_verbose=1," << std::endl;
-    buffer << "/" << std::endl;
-    buffer << "" << std::endl;
-    utils::write_to_file("MMPBSA_Inputs/mmpbsa.in",buffer.str());
+//     // // Generate ligand.prmtop
+//     // buffer.str("");
+//     // buffer << "parm " << settings.PRMTOP << std::endl;
+//     // buffer << "parmstrip !" << settings.LIGAND_MASK << std::endl;
+//     // buffer << "parmwrite out MMPBSA_Inputs/ligand.prmtop" << std::endl << "quit" << std::endl;
+//     // utils::write_to_file("parmed.in",buffer.str());
+//     // buffer.str("");
+//     // // buffer << "module load " << slurm.SLURM_amber_module << "; ";
+//     // buffer << "cpptraj -i parmed.in > ligand_parmed.log && rm parmed.in";
+//     // slurm::update_job_name("Generating_MMPBSA_Inputs.ligand");
+//     // utils::silent_shell(buffer.str().c_str());
 
-    // check that all files exist
-    if (!utils::CheckFileExists("MMPBSA_Inputs/complex.prmtop") || !utils::CheckFileExists("MMPBSA_Inputs/receptor.prmtop") || !utils::CheckFileExists("MMPBSA_Inputs/ligand.prmtop"))
-    {
-        error_log("ERROR:  failed to generate MMPBSA inputs.",1);
-    }
-    int n_com_atoms = stoi(utils::GetSysResponse("grep -A2 \"FLAG POINTERS\" MMPBSA_Inputs/complex.prmtop | tail -n 1 | awk '{print $1}'"));
-    int n_rec_atoms = stoi(utils::GetSysResponse("grep -A2 \"FLAG POINTERS\" MMPBSA_Inputs/receptor.prmtop | tail -n 1 | awk '{print $1}'"));
-    int n_lig_atoms = stoi(utils::GetSysResponse("grep -A2 \"FLAG POINTERS\" MMPBSA_Inputs/ligand.prmtop | tail -n 1 | awk '{print $1}'"));
-    if (n_com_atoms != n_rec_atoms + n_lig_atoms)
-    {
-        error_log("Error:  Ligand + Receptor does not equal Complex!",1);
-    }
-    utils::silent_shell("rm *parmed.log");
-}
+//     // // Generate mmpbsa.in
+//     // buffer.str("");
+//     // buffer << "Input file for running PB and GB" << std::endl;
+//     // buffer << "&general" << std::endl;
+//     // buffer << "   keep_files=1," << std::endl;
+//     // buffer << "   entropy=0," << std::endl;
+//     // buffer << "   ligand_mask=" << settings.LIGAND_MASK << "," << std::endl;
+//     // buffer << "   strip_mask=!" << settings.COMPLEX_MASK << "," << std::endl;
+//     // buffer << "   receptor_mask=" << settings.RECEPTOR_MASK << std::endl;
+//     // buffer << "/" << std::endl;
+//     // buffer << "&gb" << std::endl;
+//     // buffer << "  igb=2, saltcon=" << settings.SALT_CONC << "," << std::endl;
+//     // buffer << "/" << std::endl;
+//     // buffer << "&decomp" << std::endl;
+//     // buffer << " idecomp=1," << std::endl;
+//     // buffer << " dec_verbose=1," << std::endl;
+//     // buffer << "/" << std::endl;
+//     // buffer << "" << std::endl;
+//     // utils::write_to_file("MMPBSA_Inputs/mmpbsa.in",buffer.str());
+
+//     // // check that all files exist
+//     // if (!utils::CheckFileExists("MMPBSA_Inputs/complex.prmtop") || !utils::CheckFileExists("MMPBSA_Inputs/receptor.prmtop") || !utils::CheckFileExists("MMPBSA_Inputs/ligand.prmtop"))
+//     // {
+//     //     error_log("ERROR:  failed to generate MMPBSA inputs.",1);
+//     // }
+//     // int n_com_atoms = stoi(utils::GetSysResponse("grep -A2 \"FLAG POINTERS\" MMPBSA_Inputs/complex.prmtop | tail -n 1 | awk '{print $1}'"));
+//     // int n_rec_atoms = stoi(utils::GetSysResponse("grep -A2 \"FLAG POINTERS\" MMPBSA_Inputs/receptor.prmtop | tail -n 1 | awk '{print $1}'"));
+//     // int n_lig_atoms = stoi(utils::GetSysResponse("grep -A2 \"FLAG POINTERS\" MMPBSA_Inputs/ligand.prmtop | tail -n 1 | awk '{print $1}'"));
+//     // if (n_com_atoms != n_rec_atoms + n_lig_atoms)
+//     // {
+//     //     error_log("Error:  Ligand + Receptor does not equal Complex!",1);
+//     // }
+//     // utils::silent_shell("rm *parmed.log");
+// }
 
 int main(int argc, char** argv)
 {
@@ -297,8 +301,15 @@ int main(int argc, char** argv)
     generate_replicate_folder(settings);
 
     // MMPBSA Input Generation (checks inside function)
-    generate_mmpbsa_inputs(settings,slurm);
-    
+    if (settings.RUN_MMPBSA)
+    {
+        slurm::update_job_name("Generating_MMPBSA_Inputs");
+        std::stringstream buffer;
+        buffer.str("");
+        buffer << "autommpbsa --prepare -cm " << settings.COMPLEX_MASK << " -rm " << settings.RECEPTOR_MASK << " -lm " << settings.LIGAND_MASK << " -s " << settings.PRMTOP;
+        utils::silent_shell(buffer.str().c_str());
+    }
+
     // Generate Reporting Templates
     slurm::update_job_name("Generating_Report_Templates");
     latex::initialize_report(settings);

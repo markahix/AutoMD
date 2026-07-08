@@ -194,7 +194,8 @@ namespace slurm
         sys_command << " --mem=20GB";
         sys_command << " -o AMBER_%j.out -e AMBER_%j.err --wrap \"";
         sys_command << "module load " << slurm.SLURM_amber_module << "; ";
-        sys_command << "autommpbsa -s" << settings.PRMTOP << " -c MMPBSA_Inputs/complex.prmtop -r MMPBSA_Inputs/receptor.prmtop -l MMPBSA_Inputs/ligand.prmtop -m MMPBSA_Inputs/mmpbsa.in -t " << trajectory << "\"";
+        sys_command << "autommpbsa --run -s " << settings.PRMTOP;
+        sys_command << " -c MMPBSA_Inputs/complex.prmtop -r MMPBSA_Inputs/receptor.prmtop -l MMPBSA_Inputs/ligand.prmtop -m MMPBSA_Inputs/mmpbsa.in -t " << trajectory << "\"";
         std::string jobid = utils::GetSysResponse(sys_command.str().c_str());
         std::stringstream line;
         line.str(jobid);
